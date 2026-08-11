@@ -1,0 +1,26 @@
+# ./meltano.yml
+default_environment: dev
+project_id: 019fed03-9062-783c-957c-7708b2ddb5ed
+environments:
+- name: dev
+- name: staging
+- name: prod
+plugins:
+  extractors:
+    - name: tap-digisus
+      namespace: tap_digisus
+      pip_url: -e ./tap-digisus
+      executable: tap-digisus
+      capabilities:
+        - catalog
+        - discover
+        - state
+      settings:
+        - name: rate_limit_per_minute
+          kind: integer
+          value: 50
+          description: Limite de requisições por minuto (API permite 60/min; usamos margem de segurança)
+  loaders:
+  - name: target-jsonl
+    variant: andyh1203
+    pip_url: target-jsonl

@@ -1,0 +1,22 @@
+#tap-digisus/meltano.yml
+send_anonymous_usage_stats: true
+project_id: "tap-digisus"
+default_environment: test
+requires_meltano: ">=4.0"
+environments:
+- name: test
+plugins:
+  extractors:
+    - name: tap-digisus
+      namespace: tap_digisus
+      pip_url: -e ./tap-digisus
+      executable: tap-digisus
+      capabilities:
+        - catalog
+        - discover
+        - state
+      settings:
+        - name: rate_limit_per_minute
+          kind: integer
+          value: 50
+          description: Limite de requisições por minuto (API permite 60/min; usamos margem de segurança)

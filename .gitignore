@@ -1,0 +1,41 @@
+# ========================
+# MELTANO E SEGURANÇA
+# ========================
+# Ignora a pasta oculta onde o Meltano instala plugins, guarda logs e banco de dados local
+.meltano/
+
+# Ignora variáveis de ambiente
+.env
+.env.*
+!.env.example
+
+# Ignora logs do sistema
+system_logs/
+
+# ========================
+# AMBIENTE PYTHON
+# ========================
+.venv/
+env/
+
+# Ignora arquivos compilados e cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# ========================
+# DADOS LOCAIS (Evita subir arquivos pesados de extração)
+# ========================
+output/
+# data/
+*.csv
+*.jsonl
+*.parquet
+
+# ========================
+# EDITORES DE CÓDIGO E SO
+# ========================
+# VS Code
+.vscode/
