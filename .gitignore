@@ -24,6 +24,10 @@ __pycache__/
 *$py.class
 *.so
 .pytest_cache/
+.log
+.logs
+airflow/logs
+*.lock
 
 # ========================
 # DADOS LOCAIS (Evita subir arquivos pesados de extração)
@@ -33,6 +37,7 @@ output/
 *.csv
 *.jsonl
 *.parquet
+airflow.cfg
 
 # ========================
 # EDITORES DE CÓDIGO E SO

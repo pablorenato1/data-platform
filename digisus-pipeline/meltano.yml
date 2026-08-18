@@ -7,20 +7,23 @@ environments:
 - name: prod
 plugins:
   extractors:
-    - name: tap-digisus
-      namespace: tap_digisus
-      pip_url: -e ./tap-digisus
-      executable: tap-digisus
-      capabilities:
-        - catalog
-        - discover
-        - state
-      settings:
-        - name: rate_limit_per_minute
-          kind: integer
-          value: 50
-          description: Limite de requisições por minuto (API permite 60/min; usamos margem de segurança)
+  - name: tap-digisus
+    namespace: tap_digisus
+    pip_url: -e ./tap-digisus
+    executable: tap-digisus
+    capabilities:
+    - catalog
+    - discover
+    - state
+    settings:
+    - name: rate_limit_per_minute
+      kind: integer
+      value: 50
+      description: Limite de requisições por minuto (API permite 60/min; usamos margem de segurança)
   loaders:
-  - name: target-jsonl
-    variant: andyh1203
-    pip_url: target-jsonl
+  - name: target-parquet
+    variant: hotgluexyz
+    pip_url: --ignore-requires-python git+https://gitlab.com/hotglue/target-parquet.git "numpy<2"
+    config:
+      filepath: output
+      file_naming_scheme: "{stream}.parquet"

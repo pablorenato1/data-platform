@@ -16,8 +16,6 @@ from singer_sdk.streams import RESTStream
 if t.TYPE_CHECKING:
     import requests
 
-
-# Caminho fixo do log de erros — fora do controle do state do SDK, propositalmente.
 ERRORS_LOG_PATH = Path(__file__).parent / "data" / "errors.jsonl"
 
 
@@ -63,8 +61,6 @@ class DigisusStream(RESTStream):
     # ------------------------------------------------------------------
     @property
     def _rate_limit_per_minute(self) -> int:
-        # Configurável via .env -> meltano.yml (settings) -> aqui.
-        # Default conservador: 50/min sobre um limite real de 60/min.
         return int(self.config.get("rate_limit_per_minute", 50))
 
     @property
@@ -79,7 +75,6 @@ class DigisusStream(RESTStream):
         context: dict | None,
         next_page_token: t.Any | None,
     ) -> requests.PreparedRequest:
-        # Throttle proativo: espera ANTES de cada requisição, não depois.
         self._sleep_for_rate_limit()
         return super().prepare_request(context, next_page_token)
 
@@ -97,8 +92,6 @@ class DigisusStream(RESTStream):
         status = response.status_code
 
         if status == 400:
-            # "Erro na origem" — documentado pela própria API.
-            # Erro de parâmetro: retry não resolve. Fatal = SDK não tenta de novo
             self._log_error(response, category="permanent")
             raise FatalAPIError(
                 f"[400] Erro de parâmetro (não retryable): {response.url}"

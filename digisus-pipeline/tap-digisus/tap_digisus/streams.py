@@ -32,14 +32,14 @@ RETRY_MODE = os.getenv("TAP_DIGISUS_RETRY_MODE", "false").lower() == "true"
 def _load_municipio_ids() -> list[dict]:
     with MUNICIPIOS_PATH.open(encoding="utf-8") as f:
         raw = json.load(f)
-    # Confirmado por teste manual (30 municípios): remove o último dígito
-    # (dígito verificador) do código IBGE de 7 dígitos.
     return [
         {"id": str(m["id"])[:-1], "nome": m["nome"]}
         for m in raw #[:3] # TESTANDO, REMVOER O [:3] POSTERIORMENTE
     ]
 
-MUNICIPIO_LOOKUP = {m["id"]: m["nome"] for m in _load_municipio_ids()}  # módulo, carregado uma vez
+MUNICIPIO_LOOKUP = {m["id"]: m["nome"] for m in _load_municipio_ids()}
+
+MUNICIPIO_ID_FILTER = os.getenv("TAP_DIGISUS_MUNICIPIO_ID")
 
 def _load_retryable_keys() -> set[tuple[str, int, int]] | None:
     """Lê errors.jsonl de uma run anterior e retorna as chaves marcadas
@@ -52,12 +52,10 @@ def _load_retryable_keys() -> set[tuple[str, int, int]] | None:
         for line in f:
             entry = json.loads(line)
             if entry.get("categoria") == "retryable" and not entry.get("pending_retry"):
-                # pending_retry=False aqui = tentativa esgotada, registrada
-                # pelo get_records (não a tentativa intermediária do client.py)
                 keys.add((entry["municipio_id"], entry["ano"], entry["tipo"]))
     return keys or None
 
-def _convert_decimals(obj):                      # ← função nova, fora da classe
+def _convert_decimals(obj):
     """Converte Decimal para float recursivamente, em qualquer profundidade."""
     if isinstance(obj, Decimal):
         return float(obj)
@@ -70,13 +68,12 @@ def _convert_decimals(obj):                      # ← função nova, fora da cl
 class ResultadosMetasStream(DigisusStream):
     """Stream bruto/aninhado do endpoint resultados-metas."""
 
-    name = "resultados_metas"
-    path = "/relatorio/resultados-metas"
-    primary_keys: t.ClassVar[list[str]] = []  # sem PK natural; dado bruto, dbt normaliza depois
-    replication_key = None  # FULL_TABLE — API não expõe campo de atualização incremental
+    name = f"resultados_metas_{MUNICIPIO_ID_FILTER}" if MUNICIPIO_ID_FILTER else "resultados_metas"
     
+    path = "/relatorio/resultados-metas"
+    primary_keys: t.ClassVar[list[str]] = [] 
+    replication_key = None
 
-    # responsabilidade do dbt, não do tap (ELT, não ETL).
     schema = th.PropertiesList(
         th.Property("esfera", th.StringType),
         th.Property("estado", th.StringType),
@@ -84,16 +81,24 @@ class ResultadosMetasStream(DigisusStream):
         th.Property("projeto_tipo", th.StringType),
         th.Property("nu_ano_exercicio", th.StringType),
         th.Property("status", th.StringType),
-        th.Property("diretrizes", th.StringType),  # JSON serializado como string
-        # Contexto da extração — não vem da API, injetado por nós.
+        th.Property("diretrizes", th.StringType),
+        # Contexto da extração — não vem da API
         th.Property("_extract_municipio_id", th.StringType),
         th.Property("_extract_ano", th.IntegerType),
         th.Property("_extract_tipo", th.IntegerType),
     ).to_dict()
 
+    
+
     @property
     def partitions(self) -> list[dict]:
         municipios = _load_municipio_ids()
+
+        if MUNICIPIO_ID_FILTER:
+            municipios = [m for m in municipios if m["id"] == MUNICIPIO_ID_FILTER]
+            if not municipios:
+                raise ValueError(f"Município ID não encontrado: {MUNICIPIO_ID_FILTER}")
+
         all_partitions = [
             {"municipio_id": m["id"], "ano": ano, "tipo": tipo}
             for m in municipios
@@ -106,9 +111,6 @@ class ResultadosMetasStream(DigisusStream):
 
         retryable_keys = _load_retryable_keys()
         if retryable_keys is None:
-            # Modo retry ligado, mas não existe errors.jsonl de run anterior.
-            # Não faz sentido rodar tudo de novo silenciosamente — melhor
-            # falhar alto e avisar, que é o comportamento seguro.
             raise FileNotFoundError(
                 "TAP_DIGISUS_RETRY_MODE=true, mas não há errors.jsonl anterior "
                 f"em {ERRORS_LOG_PATH}. Rode uma sync completa primeiro."
@@ -164,7 +166,7 @@ class ResultadosMetasStream(DigisusStream):
             "ano": context["ano"],
             "tipo": context["tipo"],
             "categoria": categoria,
-            "pending_retry": False,  # esgotada, diferente do log intermediário
+            "pending_retry": False,
             "erro": str(exc),
         }
         ERRORS_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
