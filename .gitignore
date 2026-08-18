@@ -16,6 +16,7 @@ system_logs/
 # AMBIENTE PYTHON
 # ========================
 .venv/
+.dbt-venv/
 env/
 
 # Ignora arquivos compilados e cache do Python
