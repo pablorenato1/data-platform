@@ -7,6 +7,8 @@ import os
 import typing as t
 from pathlib import Path
 from decimal import Decimal
+from datetime import datetime
+import requests
 
 from singer_sdk import typing as th
 from singer_sdk.exceptions import FatalAPIError, RetriableAPIError
@@ -18,11 +20,11 @@ MUNICIPIOS_PATH = Path(__file__).parent / "data" / "municipios_pe.json"
 # Faixa confirmada empiricamente (curl manual): API não tem dado antes de 2016.
 # =======================================================
 # Variaveis de DEBUG
-# ANOS = [2016, 2020, 2024] # list(range(2016, 2025))  # 2016..2024
+# ANOS = [2016, 2020, 2024] # list(range(2016, 2025))  # Quais anos deverão ser extraidos
 # TIPOS_PROJETO = [10]  # 1oRDQA, 2oRDQA, 3oRDQA, RAG
 # =======================================================
 # Variaveis Reais
-ANOS = list(range(2016, 2026))  # 2016..2024
+ANOS = list(range(2016, int(datetime.now().year) + 1))  # 2016..atual
 TIPOS_PROJETO = [10, 11, 12, 13]  # 1oRDQA, 2oRDQA, 3oRDQA, RAG
 # =======================================================
 
@@ -34,7 +36,7 @@ def _load_municipio_ids() -> list[dict]:
         raw = json.load(f)
     return [
         {"id": str(m["id"])[:-1], "nome": m["nome"]}
-        for m in raw #[:3] # TESTANDO, REMVOER O [:3] POSTERIORMENTE
+        for m in raw
     ]
 
 MUNICIPIO_LOOKUP = {m["id"]: m["nome"] for m in _load_municipio_ids()}
@@ -137,23 +139,37 @@ class ResultadosMetasStream(DigisusStream):
         """Sobrescrito para impedir que uma falha em UMA partição derrube
         a sync inteira. O SDK, por padrão, deixa a exceção subir."""
         assert context is not None
+        
+        municipio = context["municipio_id"]
+        ano = context["ano"]
+        tipo = context["tipo"]
+        
         try:
             for record in super().get_records(context):
-                record["_extract_municipio_id"] = context["municipio_id"]
-                record["_extract_ano"] = context["ano"]
-                record["_extract_tipo"] = context["tipo"]
+                record["_extract_municipio_id"] = municipio
+                record["_extract_ano"] = ano
+                record["_extract_tipo"] = tipo
                 yield record
+        
+        except requests.exceptions.Timeout as exc:
+            # Timeout de rede (não passou pelo validate_response)
+            self.logger.warning(
+                "[%s] ✗ TIMEOUT ano=%s tipo=%s erro=%s",
+                municipio, ano, tipo, exc,
+            )
+            self._log_exhausted_failure(context, exc)
+            return
+        
         except (FatalAPIError, RetriableAPIError) as exc:
-            # Chegou aqui = backoff do client.py já esgotou as tentativas
-            # (RetriableAPIError) ou é erro sem retry (FatalAPIError).
-            # Registra como falha ESGOTADA (pending_retry=False), diferente
-            # das tentativas intermediárias já logadas pelo client.py.
+            # Backoff esgotou (Retriable) ou erro sem retry (Fatal)
             self._log_exhausted_failure(context, exc)
             self.logger.warning(
-                "Partição pulada após falha: municipio=%s ano=%s tipo=%s (%s)",
-                context["municipio_id"], context["ano"], context["tipo"], exc,
+                "[%s] ✗ FALHA ano=%s tipo=%s categoria=%s erro=%s",
+                municipio, ano, tipo,
+                "fatal" if isinstance(exc, FatalAPIError) else "retryable",
+                exc,
             )
-            return  # segue pro próximo item de partitions; não propaga
+            return
 
     def _log_exhausted_failure(self, context: dict, exc: Exception) -> None:
         import json as _json
@@ -186,3 +202,10 @@ class ResultadosMetasStream(DigisusStream):
         if row.get("diretrizes") is not None:
             row["diretrizes"] = json.dumps(row["diretrizes"], ensure_ascii=False)
         return row
+    
+    def _log_context_keys(self) -> list[str]:
+        return ["municipio_id", "ano", "tipo"]
+    
+    def request_records(self, context):
+        self._current_context = context
+        yield from super().request_records(context)
