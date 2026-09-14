@@ -14,10 +14,7 @@ from singer_sdk.authenticators import SimpleAuthenticator
 from singer_sdk.exceptions import FatalAPIError, RetriableAPIError
 from singer_sdk.streams import RESTStream
 
-# if t.TYPE_CHECKING:
-
 ERRORS_LOG_PATH = Path(__file__).parent / "data" / "errors.jsonl"
-
 
 class DigisusStream(RESTStream):
     """Base stream class for tap-digisus."""

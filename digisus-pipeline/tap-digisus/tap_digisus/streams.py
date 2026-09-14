@@ -20,11 +20,11 @@ MUNICIPIOS_PATH = Path(__file__).parent / "data" / "municipios_pe.json"
 # Faixa confirmada empiricamente (curl manual): API não tem dado antes de 2016.
 # =======================================================
 # Variaveis de DEBUG
-# ANOS = [2016, 2020, 2024] # list(range(2016, 2025))  # 2016..2024
+# ANOS = [2016, 2020, 2024] # list(range(2016, 2025))  # Quais anos deverão ser extraidos
 # TIPOS_PROJETO = [10]  # 1oRDQA, 2oRDQA, 3oRDQA, RAG
 # =======================================================
 # Variaveis Reais
-ANOS = list(range(2016, int(datetime.now().year)))  # 2016..2024
+ANOS = list(range(2016, int(datetime.now().year) + 1))  # 2016..atual
 TIPOS_PROJETO = [10, 11, 12, 13]  # 1oRDQA, 2oRDQA, 3oRDQA, RAG
 # =======================================================
 
@@ -36,7 +36,7 @@ def _load_municipio_ids() -> list[dict]:
         raw = json.load(f)
     return [
         {"id": str(m["id"])[:-1], "nome": m["nome"]}
-        for m in raw #[:3] # TESTANDO, REMVOER O [:3] POSTERIORMENTE
+        for m in raw
     ]
 
 MUNICIPIO_LOOKUP = {m["id"]: m["nome"] for m in _load_municipio_ids()}
