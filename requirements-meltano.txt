@@ -1,0 +1,6 @@
+# Modos Meltano + Airflow
+# Para o ambiente .venv
+
+meltano[sql]>=1.0.0
+airflow-core>=2.4.0
+apache-airflow-providers-sql
