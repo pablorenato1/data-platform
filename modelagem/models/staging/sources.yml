@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: databricks_raw          # Nome amigável que você dará para essa fonte no dbt
+    database: municipio_inteligente # Nome do seu Catalog
+    schema: raw                   # Nome do seu Schema
+    tables:
+      - name: resultados_metas    # Nome exato da tabela no Databricks
+      - name: raw_metas_dir_obj_ini

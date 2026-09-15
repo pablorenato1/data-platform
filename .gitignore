@@ -39,9 +39,18 @@ output/
 *.jsonl
 *.parquet
 airflow.cfg
+job_metrics.json
 
 # ========================
 # EDITORES DE CÓDIGO E SO
 # ========================
 # VS Code
 .vscode/
+
+# ========================
+# DBT
+# ========================
+
+target/
+logs/
+dbt_packages/
