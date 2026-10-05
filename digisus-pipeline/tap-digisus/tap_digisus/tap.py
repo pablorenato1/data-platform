@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+import logging
 
 from singer_sdk import Tap
 from singer_sdk import typing as th
@@ -16,6 +17,7 @@ else:
 
 class TapDigisus(Tap):
     """Singer tap for Digisus."""
+    logging.getLogger("singer_sdk.metrics").setLevel(logging.DEBUG)
 
     name = "tap-digisus"
 

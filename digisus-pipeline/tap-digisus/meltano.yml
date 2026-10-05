@@ -20,3 +20,5 @@ plugins:
           kind: integer
           value: 50
           description: Limite de requisições por minuto (API permite 60/min; usamos margem de segurança)
+      config:
+        metrics_log_level: debug

@@ -17,7 +17,7 @@ def _load_municipios() -> list[dict]:
 @dag(
     dag_id="digisus_extraction",
     start_date=datetime(2026, 1, 1),
-    schedule=None,
+    schedule="@monthly",
     catchup=False,
     max_active_tasks=6,
     tags=["digisus", "meltano", "databricks", "extraction"],
