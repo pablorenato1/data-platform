@@ -28,6 +28,7 @@ Erros HTTP: 429 e 5xx entram em *retry* com *backoff* (3 tentativas: 2s, 4s, 8s)
 
 **Local, com Meltano:**
 ```bash
+set -a; source .env; set +a   # o único .env fica na raiz do repositório
 cd extraction
 pip install -r requirements.txt
 meltano install
