@@ -1,0 +1,28 @@
+version: 2
+
+models:
+  - name: stg_metas
+    description: "Metas distintas de stg_base_planejamento, já com os dados do indicador."
+    columns:
+      - name: id_meta
+        description: "Chave gerada com dbt_utils.generate_surrogate_key a partir de: municipio, projeto_tipo, nu_ano_exercicio, meta_ordenacao."
+      - name: id_objetivo
+        description: "Chave gerada com dbt_utils.generate_surrogate_key a partir de: municipio, projeto_tipo, nu_ano_exercicio, objetivo_ordenacao."
+      - name: id_diretriz
+        description: "Chave gerada com dbt_utils.generate_surrogate_key a partir de: municipio, projeto_tipo, nu_ano_exercicio, diretriz_ordenacao."
+      - name: municipio
+      - name: projeto_tipo
+      - name: nu_ano_exercicio
+      - name: _ingested_at
+        description: "Momento da carga na tabela raw (criado pelo notebook de carga)."
+      - name: meta_ordenacao
+      - name: ds_meta
+      - name: sg_unidade_meta
+      - name: no_unidade_meta
+      - name: vl_projetado_plano
+      - name: vl_alcancado
+      - name: ds_indicador
+      - name: sg_unidade_indicador
+      - name: no_unidade_indicador
+      - name: nu_linha_base
+        description: "Convertido com TRY_CAST para DOUBLE; valores inválidos viram NULL."

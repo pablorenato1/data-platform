@@ -1,0 +1,32 @@
+version: 2
+
+models:
+  - name: stg_base_planejamento
+    description: "Expande o JSON do campo diretrizes de resultados_metas em níveis (diretriz, objetivo, meta e iniciativa) com explode_outer. Uma linha por iniciativa; subfuncoes permanece como array."
+    columns:
+      - name: esfera
+      - name: estado
+      - name: municipio
+      - name: projeto_tipo
+      - name: nu_ano_exercicio
+      - name: _extract_municipio_id
+        description: "Contexto da extração, não vem da API."
+      - name: _ingested_at
+        description: "Momento da carga na tabela raw (criado pelo notebook de carga)."
+      - name: ds_diretriz
+      - name: diretriz_ordenacao
+      - name: ds_objetivo
+      - name: objetivo_ordenacao
+      - name: ds_meta
+      - name: meta_ordenacao
+      - name: ds_indicador
+      - name: sg_unidade_meta
+      - name: sg_unidade_indicador
+      - name: no_unidade_indicador
+      - name: nu_linha_base
+      - name: no_unidade_meta
+      - name: vl_projetado_plano
+      - name: vl_alcancado
+      - name: ds_iniciativa
+      - name: subfuncoes
+        description: "Array de structs (nu_codigo_interno, no_subfuncao)."

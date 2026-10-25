@@ -7,8 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Baixa o executável da CLI do Databricks direto dos releases oficiais
-RUN VERSION=$(curl -fsSL https://api.github.com/repos/databricks/cli/releases/latest | grep -oP '"tag_name": "v\K[^"]+') \
-    && curl -fL -o databricks.zip "https://github.com/databricks/cli/releases/download/v1.12.0/databricks_cli_1.12.0_linux_amd64.zip" \
+RUN curl -fL -o databricks.zip "https://github.com/databricks/cli/releases/download/v1.12.0/databricks_cli_1.12.0_linux_amd64.zip" \
     && python3 -m zipfile -e databricks.zip . \
     && mv databricks /usr/local/bin/ \
     && chmod +x /usr/local/bin/databricks \
@@ -30,9 +29,9 @@ ENV PATH="/opt/airflow/meltano-venv/bin:$PATH"
 ENV MELTANO_VENV_BACKEND=virtualenv
 # ====================================================================
 
-# 2. Copia APENAS a pasta do digisus-pipeline
-COPY --chown=airflow:root digisus-pipeline /opt/airflow/digisus-pipeline
+# 2. Copia APENAS a pasta extraction (projeto Meltano)
+COPY --chown=airflow:root extraction /opt/airflow/extraction
 
 # 3. Entra na pasta correta e roda a instalação dos plugins pelo Meltano
-WORKDIR /opt/airflow/digisus-pipeline
+WORKDIR /opt/airflow/extraction
 RUN meltano install
