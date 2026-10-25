@@ -22,6 +22,8 @@ Variáveis de ambiente (modelo no `.env.example` da raiz):
 
 Erros HTTP: 429 e 5xx entram em *retry* com *backoff* (3 tentativas: 2s, 4s, 8s); os demais 4xx são fatais. Todas as falhas são gravadas em `tap-digisus/tap_digisus/data/errors.jsonl`.
 
+**Logs:** cada requisição registra `[<municipio>] ▶ REQ`, `✓ OK` (status, duração e cabeçalhos `x-ratelimit-*`), `✗ RETRY`, `✗ FALHA` (categoria `fatal` ou `retryable`), `✗ TIMEOUT` ou `✗ CONN_ERR`. Timeout e falha esgotada pulam a partição e a registram no `errors.jsonl`, sem derrubar a extração; por isso confira o resultado da carga no notebook de [databricks/](../databricks/README.md). O `errors.jsonl` fica dentro do container e some quando ele é recriado.
+
 ## Como rodar
 
 **No pipeline:** pela DAG do [airflow/](../airflow/README.md), que roda `meltano run tap-digisus target-parquet` para cada município.
