@@ -30,8 +30,8 @@ Texto com um array JSON, com a hierarquia abaixo (nomes e tipos conforme uma amo
 ## Observações sobre os dados (amostra)
 
 - `nu_ano_linha_base` e `nu_linha_base` chegam como texto (`"2017"`, `"0"`) ou `null`; os campos `vl_*` chegam como número ou `null`.
-- Os textos podem conter quebras de linha (`
-``) e caracteres corrompidos (por exemplo `¿`).
+- Os textos podem conter quebras de linha (
+ dentro do texto) e caracteres corrompidos (por exemplo `¿`).
 - Há repetições dentro do próprio dado da API: a mesma `ds_iniciativa` duas vezes na mesma meta, e a mesma `ds_diretriz` com `nu_ordenacao` diferentes.
 - Quando não há projeto para município/ano/tipo, o tap gera uma linha com `status = "sem_projeto_identificado"` e `diretrizes` nulo.
 
