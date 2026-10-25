@@ -1,8 +1,25 @@
 # docs
 
-Documentação de apoio do projeto, sem código executável.
+Documentação de apoio ao projeto. Não contém código executável.
 
-- [decisions/](decisions/): ADRs curtos (contexto, decisão, consequência) das decisões de arquitetura.
-- [dicionario-de-dados.md](dicionario-de-dados.md): esqueleto do dicionário de dados, **em andamento**.
+## Conteúdo
 
-Novos ADRs seguem a numeração `NNNN-titulo.md`. O dicionário só deve ganhar significados de campos depois de confirmados na fonte (API DigiSUS) ou no código dos modelos em [transform/](../transform/README.md).
+- [decisions/](decisions/): ADRs (*Architecture Decision Records*), um arquivo por decisão, com contexto, decisão e consequências.
+
+  | ADR | Assunto |
+  |---|---|
+  | [0001](decisions/0001-recarga-completa.md) | Recarga completa a cada execução |
+  | [0002](decisions/0002-execucao-local-best-effort.md) | Execução local, best-effort |
+  | [0003](decisions/0003-databricks-como-processamento.md) | Databricks como processamento, não serving |
+  | [0004](decisions/0004-monorepo.md) | Monorepo |
+
+- [dicionario-de-dados.md](dicionario-de-dados.md): **em andamento.** Lista os campos da tabela raw `resultados_metas`, com as descrições ainda por preencher. Camadas staging e marts entram quando a modelagem estiver estável.
+
+## Como manter
+
+- Novo ADR: crie `decisions/NNNN-titulo-curto.md` com as seções *Contexto*, *Decisão* e *Consequências*, e adicione à tabela acima. Registre apenas decisões efetivamente tomadas; para mudar uma decisão, crie um ADR novo e indique qual ele substitui.
+- Dicionário: só inclua o significado de um campo depois de confirmá-lo na fonte (API DigiSUS) ou no código dos modelos em [transform/](../transform/README.md).
+
+## Como se conecta
+
+O dicionário descreve os dados produzidos por [extraction/](../extraction/README.md) e modelados em [transform/](../transform/README.md). Os ADRs explicam as escolhas dessas etapas e do [airflow/](../airflow/README.md).
