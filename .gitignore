@@ -1,47 +1,44 @@
-# ========================
-# MELTANO E SEGURANÇA
-# ========================
-# Ignora a pasta oculta onde o Meltano instala plugins, guarda logs e banco de dados local
-.meltano/
-
-# Ignora variáveis de ambiente
+# Segredos e variáveis de ambiente
 .env
 .env.*
 !.env.example
 
-# Ignora logs do sistema
-system_logs/
-
-# ========================
-# AMBIENTE PYTHON
-# ========================
+# Python
 .venv/
 .dbt-venv/
+venv/
 env/
-
-# Ignora arquivos compilados e cache do Python
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
 .pytest_cache/
-.log
-.logs
-airflow/logs
-*.lock
 
-# ========================
-# DADOS LOCAIS (Evita subir arquivos pesados de extração)
-# ========================
-output/
-# data/
-*.csv
-*.jsonl
+# Meltano
+.meltano/
+extraction/output/
+extraction/catalogs/
+extraction/job_metrics.json
+
+# dbt
+transform/target/
+transform/dbt_packages/
+transform/logs/
+
+# Airflow (logs e config gerada)
+airflow/logs/
+airflow/config/airflow.cfg
+
+# Logs
+logs/
+*.log
+
+# Dados locais (brutos, exports)
 *.parquet
-airflow.cfg
+*.jsonl
+*.csv
+!transform/seeds/*.csv
 
-# ========================
-# EDITORES DE CÓDIGO E SO
-# ========================
-# VS Code
+# IDE e SO
 .vscode/
+.idea/
+.DS_Store
+Thumbs.db
