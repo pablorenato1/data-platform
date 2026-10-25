@@ -1,6 +1,6 @@
 # 0001. Recarga completa a cada execução
 
-**Contexto.** O `tap-digisus` não usa chave de replicação nem estado incremental e percorre todos os anos de 2016 a 2025 para cada município.
+**Contexto.** O `tap-digisus` não usa chave de replicação nem estado incremental e percorre todos os anos de 2016 ao ano corrente para cada município.
 
 **Decisão.** Cada execução recarrega todo o histórico (recarga completa), por simplicidade e idempotência.
 

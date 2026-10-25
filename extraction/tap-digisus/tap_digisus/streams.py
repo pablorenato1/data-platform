@@ -6,6 +6,7 @@ import json
 import os
 import typing as t
 from pathlib import Path
+from datetime import datetime
 from decimal import Decimal
 
 from singer_sdk import typing as th
@@ -22,7 +23,7 @@ MUNICIPIOS_PATH = Path(__file__).parent / "data" / "municipios_pe.json"
 # TIPOS_PROJETO = [10]  # 1oRDQA, 2oRDQA, 3oRDQA, RAG
 # =======================================================
 # Variaveis Reais
-ANOS = list(range(2016, 2026))  # 2016..2024
+ANOS = list(range(2016, datetime.now().year + 1))  # 2016..ano atual
 TIPOS_PROJETO = [10, 11, 12, 13]  # 1oRDQA, 2oRDQA, 3oRDQA, RAG
 # =======================================================
 

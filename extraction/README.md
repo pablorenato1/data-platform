@@ -5,7 +5,7 @@ Projeto Meltano que extrai os dados do DigiSUS. Contém o tap customizado `tap-d
 ## O que é extraído
 
 - **API:** `https://digisusgmp.saude.gov.br/v1.5/api`, endpoint `/relatorio/resultados-metas`.
-- **Partições:** cada município (lista em `tap-digisus/tap_digisus/data/municipios_pe.json`) × anos 2016 a 2025 × tipos de projeto 10 a 13. Essas faixas estão fixas em `streams.py`.
+- **Partições:** cada município (lista em `tap-digisus/tap_digisus/data/municipios_pe.json`) × anos de 2016 até o ano corrente (calculado com `datetime`) × tipos de projeto 10 a 13. Essas faixas estão fixas em `streams.py`.
 - **Carga completa:** não há chave de replicação nem estado incremental ([ADR 0001](../docs/decisions/0001-recarga-completa.md)).
 - **Saída:** um stream `resultados_metas` com os campos `esfera`, `estado`, `municipio`, `projeto_tipo`, `nu_ano_exercicio`, `status`, `diretrizes` (string com JSON aninhado) e três campos de contexto (`_extract_municipio_id`, `_extract_ano`, `_extract_tipo`). Quando o município não tem projeto naquele ano/tipo, a API devolve uma string, e o tap gera um registro com `status = "sem_projeto_identificado"`.
 - **Quando `TAP_DIGISUS_MUNICIPIO_ID` está definida**, o stream passa a se chamar `resultados_metas_<id>` e só aquele município é extraído. É assim que a DAG gera um arquivo por município.
