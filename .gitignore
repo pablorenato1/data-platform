@@ -42,3 +42,5 @@ logs/
 .idea/
 .DS_Store
 Thumbs.db
+
+transform/.user.yml
