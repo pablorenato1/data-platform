@@ -14,7 +14,7 @@ __pycache__/
 
 # Meltano
 .meltano/
-extraction/output/
+output/
 extraction/catalogs/
 extraction/job_metrics.json
 
