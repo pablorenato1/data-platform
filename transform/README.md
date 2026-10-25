@@ -30,6 +30,7 @@ dbt deps
 dbt debug --profiles-dir .
 dbt run --profiles-dir .
 ```
+No Git Bash do Windows, exporte também `MSYS_NO_PATHCONV=1` antes de carregar o `.env`; sem isso o `DATABRICKS_HTTP_PATH` (`/sql/1.0/...`) é reescrito para `C:/Program Files/Git/...` e o `dbt debug` falha com erro 404.
 O `profiles.yml` (target `dev`, `threads: 1`) lê `DATABRICKS_HOST`, `DATABRICKS_HTTP_PATH`, `DATABRICKS_CATALOG` e `DBT_DATABRICKS_TOKEN`. `dbt run` executa SQL no seu warehouse e consome cota do Databricks. `target/`, `dbt_packages/` e `logs/` são ignorados pelo Git.
 
 ## Como se conecta
