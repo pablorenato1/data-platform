@@ -18,9 +18,9 @@ WITH base AS (
 
 SELECT 
     -- ID gerado pela numeração do Objetivo (ex: 1.1)
-    {{ dbt_utils.generate_surrogate_key(['municipio', 'nu_ano_exercicio', 'objetivo_ordenacao']) }} AS id_objetivo
+    {{ dbt_utils.generate_surrogate_key(['municipio', 'projeto_tipo', 'nu_ano_exercicio', 'objetivo_ordenacao']) }} AS id_objetivo
     -- Chave Estrangeira usando a numeração da Diretriz (ex: 1)
-    , {{ dbt_utils.generate_surrogate_key(['municipio', 'nu_ano_exercicio', 'diretriz_ordenacao']) }} AS id_diretriz
+    , {{ dbt_utils.generate_surrogate_key(['municipio', 'projeto_tipo', 'nu_ano_exercicio', 'diretriz_ordenacao']) }} AS id_diretriz
     , municipio
     , projeto_tipo
     , nu_ano_exercicio

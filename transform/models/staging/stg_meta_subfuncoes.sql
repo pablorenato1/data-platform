@@ -6,6 +6,7 @@ WITH base AS (
 , metas_com_subfuncao AS (
     SELECT DISTINCT
         municipio
+        , projeto_tipo
         , nu_ano_exercicio
         , meta_ordenacao
         , subfuncoes
@@ -18,7 +19,7 @@ WITH base AS (
 , explosao_subfuncoes AS (
     SELECT 
         -- ID da Meta (Chave de ligação com a stg_metas)
-        {{ dbt_utils.generate_surrogate_key(['municipio', 'nu_ano_exercicio', 'meta_ordenacao']) }} AS id_meta
+        {{ dbt_utils.generate_surrogate_key(['municipio', 'projeto_tipo', 'nu_ano_exercicio', 'meta_ordenacao']) }} AS id_meta
         
         -- Extraindo os dados de dentro do array
         , sub.nu_codigo_interno AS id_subfuncao

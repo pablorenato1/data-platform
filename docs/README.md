@@ -14,6 +14,7 @@ Documentação de apoio ao projeto. Não contém código executável.
   | [0004](decisions/0004-monorepo.md) | Monorepo |
   | [0005](decisions/0005-modelos-reconstruidos.md) | Modelos raw/staging reconstruídos a partir do SQL compilado |
   | [0006](decisions/0006-remove-camada-raw-do-dbt.md) | Remoção da camada raw do dbt |
+  | [0007](decisions/0007-projeto-tipo-nas-chaves.md) | `projeto_tipo` nas chaves dos modelos staging |
 
 - [dicionario-de-dados.md](dicionario-de-dados.md): **em andamento.** Lista os campos da tabela raw `resultados_metas`, com as descrições ainda por preencher. Camadas staging e marts entram quando a modelagem estiver estável (ADR 0005 explica a origem dos modelos atuais).
 

@@ -17,7 +17,7 @@ WITH base AS (
 
 SELECT 
     -- ID gerado pela numeração da Diretriz
-    {{ dbt_utils.generate_surrogate_key(['municipio', 'nu_ano_exercicio', 'diretriz_ordenacao']) }} AS id_diretriz
+    {{ dbt_utils.generate_surrogate_key(['municipio', 'projeto_tipo', 'nu_ano_exercicio', 'diretriz_ordenacao']) }} AS id_diretriz
     , municipio
     , projeto_tipo
     , nu_ano_exercicio

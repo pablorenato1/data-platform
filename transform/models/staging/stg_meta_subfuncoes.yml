@@ -5,7 +5,7 @@ models:
     description: "Subfunções de cada meta, obtidas ao explodir o array subfuncoes (metas sem subfunção ficam de fora)."
     columns:
       - name: id_meta
-        description: "Chave gerada com dbt_utils.generate_surrogate_key a partir de: municipio, nu_ano_exercicio, meta_ordenacao."
+        description: "Chave gerada com dbt_utils.generate_surrogate_key a partir de: municipio, projeto_tipo, nu_ano_exercicio, meta_ordenacao."
       - name: id_subfuncao
         description: "Vem de nu_codigo_interno da subfunção."
       - name: no_subfuncao

@@ -5,9 +5,9 @@ models:
     description: "Objetivos distintos de stg_base_planejamento (ds_objetivo sem espaços nas pontas)."
     columns:
       - name: id_objetivo
-        description: "Chave gerada com dbt_utils.generate_surrogate_key a partir de: municipio, nu_ano_exercicio, objetivo_ordenacao."
+        description: "Chave gerada com dbt_utils.generate_surrogate_key a partir de: municipio, projeto_tipo, nu_ano_exercicio, objetivo_ordenacao."
       - name: id_diretriz
-        description: "Chave gerada com dbt_utils.generate_surrogate_key a partir de: municipio, nu_ano_exercicio, diretriz_ordenacao."
+        description: "Chave gerada com dbt_utils.generate_surrogate_key a partir de: municipio, projeto_tipo, nu_ano_exercicio, diretriz_ordenacao."
       - name: municipio
       - name: projeto_tipo
       - name: nu_ano_exercicio

@@ -20,8 +20,8 @@ WITH base AS (
 )
 
 SELECT 
-    {{ dbt_utils.generate_surrogate_key(['municipio', 'nu_ano_exercicio', 'meta_ordenacao', 'ds_indicador']) }} AS id_indicador
-    , {{ dbt_utils.generate_surrogate_key(['municipio', 'nu_ano_exercicio', 'meta_ordenacao']) }} AS id_meta
+    {{ dbt_utils.generate_surrogate_key(['municipio', 'projeto_tipo', 'nu_ano_exercicio', 'meta_ordenacao', 'ds_indicador']) }} AS id_indicador
+    , {{ dbt_utils.generate_surrogate_key(['municipio', 'projeto_tipo', 'nu_ano_exercicio', 'meta_ordenacao']) }} AS id_meta
     , municipio
     , projeto_tipo
     , nu_ano_exercicio
