@@ -1,9 +1,28 @@
 version: 2
 
 sources:
-  - name: databricks_raw          # Nome amigável que você dará para essa fonte no dbt
-    database: municipio_inteligente # Nome do seu Catalog
-    schema: raw                   # Nome do seu Schema
+  - name: databricks_raw
+    database: municipio_inteligente
+    schema: raw
     tables:
-      - name: resultados_metas    # Nome exato da tabela no Databricks
-      - name: raw_metas_dir_obj_ini
+      - name: resultados_metas
+        description: "Tabela Delta criada pelo notebook de carga (databricks/) a partir dos Parquet do tap-digisus."
+        columns:
+          - name: esfera
+          - name: estado
+          - name: municipio
+          - name: projeto_tipo
+          - name: nu_ano_exercicio
+          - name: status
+          - name: diretrizes
+            description: "JSON aninhado em texto (diretrizes, objetivos, metas, iniciativas e subfunções)."
+          - name: _extract_municipio_id
+            description: "Contexto da extração, não vem da API."
+          - name: _extract_ano
+            description: "Contexto da extração, não vem da API."
+          - name: _extract_tipo
+            description: "Contexto da extração, não vem da API."
+          - name: _source_file
+            description: "Arquivo Parquet de origem (criado pelo notebook de carga)."
+          - name: _ingested_at
+            description: "Momento da carga (criado pelo notebook de carga)."

@@ -1,0 +1,15 @@
+version: 2
+
+models:
+  - name: stg_diretrizes
+    description: "Diretrizes distintas de stg_base_planejamento (ds_diretriz sem espaços nas pontas)."
+    columns:
+      - name: id_diretriz
+        description: "Chave gerada com dbt_utils.generate_surrogate_key a partir de: municipio, nu_ano_exercicio, diretriz_ordenacao."
+      - name: municipio
+      - name: projeto_tipo
+      - name: nu_ano_exercicio
+      - name: _ingested_at
+        description: "Momento da carga na tabela raw (criado pelo notebook de carga)."
+      - name: diretriz_ordenacao
+      - name: ds_diretriz
