@@ -46,11 +46,9 @@ def digisus_extraction():
             "sleep $(( {{ 2 * ti.map_index }} % 20 )) && "
             
             "echo '\n👉 [PASSO 1] Verificando Variaveis de Ambiente no Contexto do Airflow:' \n"
-            "echo \"DATABRICKS_HOST: '${DATABRICKS_HOST}'\" \n"
             "echo \"DATABRICKS_CATALOG: '${DATABRICKS_CATALOG}'\" \n"
             "echo \"DATABRICKS_SCHEMA: '${DATABRICKS_SCHEMA}'\" \n"
             "echo \"DATABRICKS_VOLUME_RAW: '${DATABRICKS_VOLUME_RAW}'\" \n"
-            "echo \"DATABRICKS_TOKEN: '${DATABRICKS_TOKEN:0:5}... [mascarado]'\" \n"
             
             "echo '\n👉 [PASSO 2] Extraindo dados com Meltano:' \n"
             "cd /opt/airflow/digisus-pipeline && "
@@ -66,11 +64,11 @@ def digisus_extraction():
             "databricks current-user me || { echo '❌ Falha na autenticação do Databricks!'; exit 1; } \n"
             "echo '✅ Autenticação OK!' \n"
             
-            "echo '\n👉 [PASSO 5] Montando URL e Iniciando Upload (Modo DEBUG):' \n"
+            "echo '\n👉 [PASSO 5] Montando URL e Iniciando Upload:' \n"
             "DESTINO=\"dbfs:/Volumes/${DATABRICKS_CATALOG}/${DATABRICKS_SCHEMA}/${DATABRICKS_VOLUME_RAW}/resultados_metas_{{ params.municipio_id }}.parquet\" \n"
             "echo \"URL de destino: $DESTINO\" \n"
             
-            "databricks fs cp \"$PARQUET_FILE\" \"$DESTINO\" --overwrite --debug \n"
+            "databricks fs cp \"$PARQUET_FILE\" \"$DESTINO\" --overwrite \n"
             
             "echo '\n👉 [PASSO 6] Limpeza de Arquivo Local:' \n"
             "rm -f \"$PARQUET_FILE\" \n"
