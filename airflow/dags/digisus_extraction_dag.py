@@ -53,10 +53,11 @@ def digisus_extraction():
             "echo '\n👉 [PASSO 2] Extraindo dados com Meltano:' \n"
             "cd /opt/airflow/extraction && "
             "export TAP_DIGISUS_MUNICIPIO_ID={{ params.municipio_id }} && "
+            "rm -f resultados_metas_{{ params.municipio_id }}-*.parquet && "
             "PYTHONWARNINGS=\"ignore\" /opt/airflow/meltano-venv/bin/meltano run tap-digisus target-parquet --force \n"
             
             "echo '\n👉 [PASSO 3] Validando Arquivo Parquet Gerado:' \n"
-            "PARQUET_FILE=$(ls resultados_metas_{{ params.municipio_id }}-*.parquet | head -n 1) \n"
+            "PARQUET_FILE=$(ls -t resultados_metas_{{ params.municipio_id }}-*.parquet | head -n 1) \n"
             "echo \"Nome do arquivo capturado: $PARQUET_FILE\" \n"
             "ls -lh \"$PARQUET_FILE\" \n"
             "TAMANHO=$(stat -c %s \"$PARQUET_FILE\") \n"

@@ -10,8 +10,8 @@ Arquivo: [dags/digisus_extraction_dag.py](dags/digisus_extraction_dag.py).
 - **`discover_catalog`:** executa `meltano invoke tap-digisus --discover` e salva o catálogo em `catalogs/tap-digisus.json`.
 - **`extract_municipio`:** uma task por município (*dynamic task mapping*, a lista vem do `municipios_pe.json` do tap), com 3 retries e intervalo de 5 minutos. Cada task:
   1. espera um tempo escalonado pelo índice, para espalhar as chamadas à API;
-  2. roda `meltano run tap-digisus target-parquet --force` com `TAP_DIGISUS_MUNICIPIO_ID` do município;
-  3. confere o `.parquet` gerado e **falha a task se ele tiver menos de 512 bytes** (arquivo vazio de uma extração que não trouxe registros), sem enviá-lo; os 3 retries valem para isso;
+  2. apaga sobras de tentativas anteriores (`resultados_metas_<id>-*.parquet`) e roda `meltano run tap-digisus target-parquet --force` com `TAP_DIGISUS_MUNICIPIO_ID` do município;
+  3. escolhe o `.parquet` mais recente do município, confere-o e **falha a task se ele tiver menos de 512 bytes** (arquivo vazio de uma extração que não trouxe registros), sem enviá-lo; os 3 retries valem para isso;
   4. autentica no Databricks (`databricks current-user me`);
   5. envia o arquivo com `databricks fs cp --overwrite` para `/Volumes/<catálogo>/<schema>/<volume>/resultados_metas_<id>.parquet`;
   6. apaga o arquivo local.
