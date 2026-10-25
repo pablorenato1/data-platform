@@ -9,7 +9,7 @@ plugins:
   extractors:
     - name: tap-digisus
       namespace: tap_digisus
-      pip_url: -e ./tap-digisus
+      pip_url: -e .
       executable: tap-digisus
       capabilities:
         - catalog
