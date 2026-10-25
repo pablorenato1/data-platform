@@ -34,7 +34,7 @@ flowchart LR
 | [transform/](transform/README.md) | Projeto dbt |
 | [export/](export/README.md) | Exportação dos marts para Parquet (planejado) |
 | [docs/](docs/README.md) | Decisões (ADRs) e dicionário de dados |
-| `site/` | Planejado, ainda não existe |
+| [site/](site/README.md) | Arquivos do site estático (planejado, ainda sem conteúdo) |
 
 ## Como rodar localmente
 
@@ -62,7 +62,6 @@ A modelagem roda separadamente, veja [transform/](transform/README.md).
 | Modelagem dbt | **Em andamento**: só `stg_base_planejamento` está versionado; marts ainda não existem |
 | Exportação para Parquet | Planejada |
 | Site estático | Planejado |
-| CI (`.github/workflows/`) | Não existe |
 
 ## Decisões de projeto
 
