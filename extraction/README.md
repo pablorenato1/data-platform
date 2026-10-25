@@ -51,4 +51,4 @@ O `tap-digisus/meltano.yml` serve para rodar o tap sozinho com o Meltano, dentro
 
 - Entrada: API do DigiSUS.
 - Saída: arquivos Parquet que a DAG envia a um Volume do Databricks ([airflow/](../airflow/README.md)).
-- O [transform/](../transform/README.md) parte de uma tabela `resultados_metas` no schema `raw`. O passo que transforma os arquivos do Volume nessa tabela **não está neste repositório**.
+- O [transform/](../transform/README.md) parte de uma tabela `resultados_metas` no schema `raw`. O notebook que transforma os arquivos do Volume nessa tabela está em [databricks/](../databricks/README.md).

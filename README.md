@@ -31,6 +31,7 @@ flowchart LR
 |---|---|
 | [airflow/](airflow/README.md) | Dockerfile e DAGs |
 | [extraction/](extraction/README.md) | Projeto Meltano e `tap-digisus` |
+| [databricks/](databricks/README.md) | Notebook de carga (Parquet do Volume → tabela raw) |
 | [transform/](transform/README.md) | Projeto dbt |
 | [export/](export/README.md) | Exportação dos marts para Parquet (planejado) |
 | [docs/](docs/README.md) | Decisões (ADRs) e dicionário de dados |
@@ -50,7 +51,7 @@ Airflow em http://localhost:8080 (usuário e senha padrão `airflow`/`airflow`, 
 
 > Atenção: uma execução completa chama a API do DigiSUS para todos os municípios e consome cota do Databricks.
 
-A modelagem roda separadamente, veja [transform/](transform/README.md).
+Depois da DAG, rode o notebook de [databricks/](databricks/README.md) para criar a tabela raw e então a modelagem em [transform/](transform/README.md).
 
 ## Status do projeto
 
@@ -58,8 +59,9 @@ A modelagem roda separadamente, veja [transform/](transform/README.md).
 |---|---|
 | Extração (tap-digisus + Meltano) | Pronta |
 | Orquestração (DAG mensal, Docker local) | Pronta |
-| Carga no Databricks (Volume) | Pronta |
-| Modelagem dbt | **Em andamento**: só `stg_base_planejamento` está versionado; marts ainda não existem |
+| Envio dos Parquet ao Volume (DAG) | Pronto |
+| Carga Volume → tabela raw (notebook) | Pronta, executada manualmente |
+| Modelagem dbt | **Em andamento**: `raw` e `staging` versionados; `intermediate` e `marts` ainda não existem |
 | Exportação para Parquet | Planejada |
 | Site estático | Planejado |
 
