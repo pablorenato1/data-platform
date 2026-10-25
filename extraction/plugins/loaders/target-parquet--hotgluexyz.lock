@@ -1,0 +1,59 @@
+{
+  "plugin_type": "loaders",
+  "name": "target-parquet",
+  "namespace": "target_parquet",
+  "variant": "hotgluexyz",
+  "label": "Parquet",
+  "docs": "https://hub.meltano.com/loaders/target-parquet--hotgluexyz",
+  "repo": "https://gitlab.com/hotglue/target-parquet",
+  "pip_url": "git+https://gitlab.com/hotglue/target-parquet.git",
+  "executable": "target-parquet",
+  "description": "Columnar Storage Format",
+  "logo_url": "https://hub.meltano.com/assets/logos/loaders/parquet.png",
+  "capabilities": [
+    "about",
+    "schema-flattening",
+    "stream-maps"
+  ],
+  "settings_group_validation": [
+    []
+  ],
+  "settings": [
+    {
+      "name": "file_naming_scheme",
+      "kind": "string",
+      "label": "File Naming Scheme",
+      "description": "The scheme with which output files will be named"
+    },
+    {
+      "name": "filepath",
+      "kind": "string",
+      "label": "Filepath",
+      "description": "The path to the target output file"
+    },
+    {
+      "name": "flattening_enabled",
+      "kind": "boolean",
+      "label": "Flattening Enabled",
+      "description": "'True' to enable schema flattening and automatically expand nested properties."
+    },
+    {
+      "name": "flattening_max_depth",
+      "kind": "integer",
+      "label": "Flattening Max Depth",
+      "description": "The max depth to flatten schemas."
+    },
+    {
+      "name": "stream_map_config",
+      "kind": "object",
+      "label": "Stream Map Config",
+      "description": "User-defined config values to be used within map expressions."
+    },
+    {
+      "name": "stream_maps",
+      "kind": "object",
+      "label": "Stream Maps",
+      "description": "Config object for stream maps capability."
+    }
+  ]
+}
