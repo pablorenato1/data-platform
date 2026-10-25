@@ -59,6 +59,10 @@ def digisus_extraction():
             "PARQUET_FILE=$(ls resultados_metas_{{ params.municipio_id }}-*.parquet | head -n 1) \n"
             "echo \"Nome do arquivo capturado: $PARQUET_FILE\" \n"
             "ls -lh \"$PARQUET_FILE\" \n"
+            "TAMANHO=$(stat -c %s \"$PARQUET_FILE\") \n"
+            "if [ \"$TAMANHO\" -lt 512 ]; then "
+            "echo \"❌ Parquet vazio ou incompleto ($TAMANHO bytes): nenhum registro extraido. Nao sera enviado.\"; "
+            "rm -f \"$PARQUET_FILE\"; exit 1; fi \n"
             
             "echo '\n👉 [PASSO 4] Testando Autenticacao do Databricks:' \n"
             "databricks current-user me || { echo '❌ Falha na autenticação do Databricks!'; exit 1; } \n"
