@@ -7,7 +7,7 @@ import os
 from airflow.sdk import dag
 from airflow.providers.standard.operators.bash import BashOperator
 
-MUNICIPIOS_PATH = Path("/opt/airflow/digisus-pipeline/tap-digisus/tap_digisus/data/municipios_pe.json")
+MUNICIPIOS_PATH = Path("/opt/airflow/extraction/tap-digisus/tap_digisus/data/municipios_pe.json")
 
 def _load_municipios() -> list[dict]:
     with MUNICIPIOS_PATH.open(encoding="utf-8") as f:
@@ -28,7 +28,7 @@ def digisus_extraction():
     discover_catalog = BashOperator(
         task_id="discover_catalog",
         bash_command=(
-            "cd /opt/airflow/digisus-pipeline && "
+            "cd /opt/airflow/extraction && "
             "mkdir -p catalogs && "
             "/opt/airflow/meltano-venv/bin/meltano invoke tap-digisus --discover "
             "> catalogs/tap-digisus.json"
@@ -51,7 +51,7 @@ def digisus_extraction():
             "echo \"DATABRICKS_VOLUME_RAW: '${DATABRICKS_VOLUME_RAW}'\" \n"
             
             "echo '\n👉 [PASSO 2] Extraindo dados com Meltano:' \n"
-            "cd /opt/airflow/digisus-pipeline && "
+            "cd /opt/airflow/extraction && "
             "export TAP_DIGISUS_MUNICIPIO_ID={{ params.municipio_id }} && "
             "PYTHONWARNINGS=\"ignore\" /opt/airflow/meltano-venv/bin/meltano run tap-digisus target-parquet --force \n"
             
