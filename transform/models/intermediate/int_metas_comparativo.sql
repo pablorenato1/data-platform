@@ -1,12 +1,14 @@
--- Uma linha por meta (município + ano + numeração), com os 4 relatórios lado a lado:
--- 1º RDQA, 2º RDQA, 3º RDQA e RAG. Serve para ver se uma diferença ou uma flag é pontual
--- (aparece em um relatório) ou recorrente (aparece em mais de um).
--- Nenhum valor é alterado; quando há mais de uma linha para a mesma meta no mesmo
--- relatório (numeração repetida na origem), usa-se max() e a flag_chave_repetida avisa.
+-- Uma linha por meta + indicador (município, ano, meta_ordenacao e ds_indicador), com os
+-- 4 relatórios lado a lado: 1º RDQA, 2º RDQA, 3º RDQA e RAG. Serve para ver se uma
+-- diferença ou uma flag é pontual (aparece em um relatório) ou recorrente (em mais de um).
+-- Uma meta pode ter vários indicadores; cada um é uma linha. Os valores de plano, executado
+-- e alcançado são da meta e se repetem em cada linha dos seus indicadores.
+-- Nenhum valor é alterado.
 WITH metas AS (
-    -- Chaves sem projeto_tipo, para casar a mesma meta entre os relatórios
+    -- Chaves sem projeto_tipo, para casar a mesma meta/indicador entre os relatórios
     SELECT
         *
+        , {{ dbt_utils.generate_surrogate_key(['municipio', 'nu_ano_exercicio', 'meta_ordenacao', 'ds_indicador']) }} AS id_indicador_base
         , {{ dbt_utils.generate_surrogate_key(['municipio', 'nu_ano_exercicio', 'meta_ordenacao']) }} AS id_meta_base
         , {{ dbt_utils.generate_surrogate_key(['municipio', 'nu_ano_exercicio', 'objetivo_ordenacao']) }} AS id_objetivo_base
         , {{ dbt_utils.generate_surrogate_key(['municipio', 'nu_ano_exercicio', 'diretriz_ordenacao']) }} AS id_diretriz_base
@@ -14,7 +16,8 @@ WITH metas AS (
 )
 
 SELECT
-    id_meta_base
+    id_indicador_base
+    , max(id_meta_base) AS id_meta_base
     , max(id_objetivo_base) AS id_objetivo_base
     , max(id_diretriz_base) AS id_diretriz_base
     , municipio
@@ -23,13 +26,12 @@ SELECT
     , max(objetivo_ordenacao) AS objetivo_ordenacao
     , meta_ordenacao
     , max(ds_meta) AS ds_meta
-    , max(ds_indicador) AS ds_indicador
+    , ds_indicador
     , max(tipo_valor_meta) AS tipo_valor_meta
 
-    -- Quantos relatórios têm esta meta (1 a 4) e se ela é igual entre eles
+    -- Em quantos relatórios esta meta + indicador aparece (1 a 4) e se é igual entre eles
     , count(DISTINCT projeto_tipo) AS qtd_relatorios_presentes
     , count(DISTINCT ds_meta) > 1 AS flag_texto_meta_diferente
-    , count(DISTINCT ds_indicador) > 1 AS flag_indicador_diferente
     , count(DISTINCT vl_projetado_plano) > 1 AS flag_plano_diferente
 
     -- Status do relatório do município, por relatório
@@ -71,7 +73,7 @@ SELECT
     , count(DISTINCT CASE WHEN tem_flag_valor_extremo THEN projeto_tipo END) = 1 AS flag_extrema_pontual
     , count(DISTINCT CASE WHEN tem_flag_valor_extremo THEN projeto_tipo END) >= 2 AS flag_extrema_recorrente
 
-    -- Aviso: mais de uma linha da mesma meta no mesmo relatório (numeração repetida na origem)
+    -- Guarda: mais de uma linha da mesma meta + indicador no mesmo relatório (hoje não ocorre)
     , count(*) > count(DISTINCT projeto_tipo) AS flag_chave_repetida
 FROM metas
-GROUP BY id_meta_base, municipio, nu_ano_exercicio, meta_ordenacao
+GROUP BY id_indicador_base, municipio, nu_ano_exercicio, meta_ordenacao, ds_indicador

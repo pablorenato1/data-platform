@@ -60,9 +60,9 @@ Texto com um array JSON, com a hierarquia abaixo (nomes e tipos conforme uma amo
 
 Cada município tem 4 relatórios por ano (`projeto_tipo`): `1º RDQA`, `2º RDQA`, `3º RDQA` (quadrimestres) e `RAG` (anual). O `status` do relatório, na origem, tem valores como `Avaliado`, `Em Elaboração`, `Não Iniciado`, `Em Análise no Conselho` e `Retornado para Ajuste`; as linhas sem projeto têm `sem_projeto_identificado`.
 
-- Em `stg_metas`, cada relatório tem cerca de 177 mil metas em 178 municípios, e 99,8% das metas (município, ano e `meta_ordenacao`) aparecem nos 4 relatórios.
+- Em `stg_metas`, cada relatório tem cerca de 177 mil metas em 178 municípios. Há 177.070 metas (município, ano e `meta_ordenacao`) e 177.461 combinações meta + indicador, porque 106 metas têm mais de um indicador (até 3). 176.613 combinações aparecem nos 4 relatórios e, em 7 metas, o número de indicadores muda entre relatórios.
 - `vl_alcancado` é classificado em `nulo`, `zero` ou `preenchido` (`situacao_preenchimento`). Zero e nulo são respostas dos responsáveis ("sem dado para a meta"). Por relatório (1º, 2º, 3º RDQA, RAG): zero em 98.195, 95.212, 87.129 e 41.602 metas; nulo em cerca de 9,2 mil em todos.
-- Em 97.844 das 177.070 metas o `vl_alcancado` difere entre relatórios; em 245 o texto da meta e em 235 o plano mudam entre relatórios.
+- Em 97.818 das 177.461 combinações meta + indicador o `vl_alcancado` difere entre relatórios; em 14 o texto da meta e em 161 o plano mudam entre relatórios.
 - Flags extremas: 456 metas em um só relatório (pontual) e 238 em dois ou mais (recorrente).
 
 ## Camadas staging e marts

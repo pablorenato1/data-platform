@@ -2,19 +2,23 @@ version: 2
 
 models:
   - name: int_metas_comparativo
-    description: "Uma linha por meta (município, ano e meta_ordenacao) com os 4 relatórios (1º, 2º e 3º RDQA e RAG) lado a lado, para ver se uma diferença ou flag é pontual ou recorrente. Nenhum valor é alterado."
+    description: "Uma linha por meta + indicador (município, ano, meta_ordenacao e ds_indicador) com os 4 relatórios (1º, 2º e 3º RDQA e RAG) lado a lado, para ver se uma diferença ou flag é pontual ou recorrente. Uma meta com vários indicadores tem uma linha por indicador. Nenhum valor é alterado."
     columns:
-      - name: id_meta_base
-        description: "Chave sem projeto_tipo: município, ano e meta_ordenacao."
+      - name: id_indicador_base
+        description: "Chave sem projeto_tipo: município, ano, meta_ordenacao e ds_indicador."
         tests:
           - unique
+          - not_null
+      - name: id_meta_base
+        description: "Chave da meta sem projeto_tipo. Repete-se nas linhas dos indicadores da mesma meta."
+        tests:
           - not_null
       - name: id_objetivo_base
         description: "Chave do objetivo sem projeto_tipo: município, ano e objetivo_ordenacao."
       - name: id_diretriz_base
         description: "Chave da diretriz sem projeto_tipo: município, ano e diretriz_ordenacao."
       - name: qtd_relatorios_presentes
-        description: "Em quantos dos 4 relatórios a meta aparece."
+        description: "Em quantos dos 4 relatórios a meta + indicador aparece."
         tests:
           - not_null
           - accepted_values:
@@ -22,8 +26,6 @@ models:
                 values: [1, 2, 3, 4]
       - name: flag_texto_meta_diferente
         description: "ds_meta diferente entre relatórios."
-      - name: flag_indicador_diferente
-        description: "ds_indicador diferente entre relatórios."
       - name: flag_plano_diferente
         description: "vl_projetado_plano diferente entre relatórios."
       - name: vl_alcancado_amplitude
@@ -37,4 +39,9 @@ models:
       - name: flag_extrema_recorrente
         description: "Flag extrema em dois ou mais relatórios."
       - name: flag_chave_repetida
-        description: "Mais de uma linha da mesma meta no mesmo relatório (numeração repetida na origem); os valores usam max()."
+        description: "Guarda: mais de uma linha da mesma meta + indicador no mesmo relatório. Hoje não ocorre; o teste falha se passar a ocorrer."
+        tests:
+          - accepted_values:
+              arguments:
+                values: [false]
+                quote: false
