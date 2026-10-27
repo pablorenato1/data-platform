@@ -35,6 +35,27 @@ Texto com um array JSON, com a hierarquia abaixo (nomes e tipos conforme uma amo
 - Uma requisição (município 260005, ano 2018, tipo 10) gerou **uma linha**, com `diretrizes` como `str` de 165.095 caracteres e 127 diretrizes. O volume por linha é grande.
 - Quando não há projeto para município/ano/tipo, o tap gera uma linha com `status = "sem_projeto_identificado"` e `diretrizes` nulo.
 
+## Unidades de medida e valores da meta (observado nos dados, não é definição oficial)
+
+`sg_unidade_meta` / `no_unidade_meta` têm 8 valores, mapeados em `transform/seeds/unidades_medida.csv`:
+
+| sg_unidade | no_unidade | tipo_valor |
+|---|---|---|
+| Num | Número | quantidade |
+| PERC | Percentual | percentual |
+| PROP | Proporção | proporcao |
+| RAZ | Razão | razao |
+| MOE | Moeda | monetario |
+| TAXA | Taxa | taxa |
+| IND | Índice | indice |
+| DEC | Decimal | decimal |
+
+- `vl_projetado_plano` está na unidade da meta (`Num`: −120 a 180.000.000; `MOE`: até 64,5 milhões; `PERC` e `PROP`: 0 a 100).
+- `vl_alcancado` fica entre 0 e 100 em 87% a 100% das metas de **todas** as unidades, e parece ser a proporção de cumprimento (exemplo: plano 2, executado 1, alcançado 50). 19.771 metas têm valor acima de 100, 1.014 acima de 1000, e 28.503 metas `Num` não têm valor.
+- `vl_executado_relatorio` e `vl_projetado_pas` vêm do JSON e estão preenchidos em 504.728 e 671.285 das 708.327 metas de `stg_metas`.
+- A unidade do indicador é nula em 190.189 metas e difere da unidade da meta em 14.683.
+- Os valores são preenchidos pelos responsáveis em cada município e não são corrigidos: `int_metas_unidades` apenas sinaliza os muito fora do comum com flags.
+
 ## Camadas staging e marts
 
 _A documentar quando a modelagem estiver estável._
