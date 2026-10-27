@@ -5,6 +5,12 @@ models:
     description: "stg_metas com o tipo de valor normalizado (seed unidades_medida) e flags de valores muito fora do comum. Mesma granularidade de stg_metas; nenhum valor é alterado."
     columns:
       - name: id_meta
+      - name: projeto_tipo
+        description: "Relatório de origem. Valor novo na API faz o teste falhar, porque int_metas_comparativo só conhece estes 4."
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["1º RDQA", "2º RDQA", "3º RDQA", "RAG"]
       - name: tipo_valor_meta
         description: "tipo_valor da unidade da meta (sg_unidade_meta) no seed unidades_medida. Nunca deve ser nulo: unidade nova na API faz o teste falhar."
         tests:
@@ -30,3 +36,9 @@ models:
         description: "Informativa: vl_projetado_plano igual a zero com vl_alcancado maior que zero. Não entra em tem_flag_valor_extremo."
       - name: tem_flag_valor_extremo
         description: "Verdadeiro se qualquer flag extrema (alcancado_extremo, plano_negativo, plano_extremo, percentual_fora_faixa) estiver ativa."
+      - name: situacao_preenchimento
+        description: "Situação de vl_alcancado: 'nulo', 'zero' ou 'preenchido'. Zero e nulo são respostas do responsável (sem dado para a meta), por isso são classificados e não descartados."
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["nulo", "zero", "preenchido"]

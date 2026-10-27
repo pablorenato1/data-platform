@@ -1,0 +1,40 @@
+version: 2
+
+models:
+  - name: int_metas_comparativo
+    description: "Uma linha por meta (município, ano e meta_ordenacao) com os 4 relatórios (1º, 2º e 3º RDQA e RAG) lado a lado, para ver se uma diferença ou flag é pontual ou recorrente. Nenhum valor é alterado."
+    columns:
+      - name: id_meta_base
+        description: "Chave sem projeto_tipo: município, ano e meta_ordenacao."
+        tests:
+          - unique
+          - not_null
+      - name: id_objetivo_base
+        description: "Chave do objetivo sem projeto_tipo: município, ano e objetivo_ordenacao."
+      - name: id_diretriz_base
+        description: "Chave da diretriz sem projeto_tipo: município, ano e diretriz_ordenacao."
+      - name: qtd_relatorios_presentes
+        description: "Em quantos dos 4 relatórios a meta aparece."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4]
+      - name: flag_texto_meta_diferente
+        description: "ds_meta diferente entre relatórios."
+      - name: flag_indicador_diferente
+        description: "ds_indicador diferente entre relatórios."
+      - name: flag_plano_diferente
+        description: "vl_projetado_plano diferente entre relatórios."
+      - name: vl_alcancado_amplitude
+        description: "Maior menos menor vl_alcancado entre os relatórios (ignora nulos)."
+      - name: flag_alcancado_varia_entre_relatorios
+        description: "Há mais de um valor distinto de vl_alcancado entre os relatórios."
+      - name: qtd_relatorios_com_flag_extrema
+        description: "Em quantos relatórios a meta tem tem_flag_valor_extremo (0 a 4)."
+      - name: flag_extrema_pontual
+        description: "Flag extrema em exatamente um relatório."
+      - name: flag_extrema_recorrente
+        description: "Flag extrema em dois ou mais relatórios."
+      - name: flag_chave_repetida
+        description: "Mais de uma linha da mesma meta no mesmo relatório (numeração repetida na origem); os valores usam max()."
