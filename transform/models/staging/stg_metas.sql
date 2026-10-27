@@ -8,6 +8,7 @@ WITH base AS (
         municipio
         , projeto_tipo
         , nu_ano_exercicio
+        , status
         , _ingested_at
         , diretriz_ordenacao
         , objetivo_ordenacao 
@@ -38,7 +39,10 @@ SELECT
     , municipio
     , projeto_tipo
     , nu_ano_exercicio
+    , status
     , _ingested_at
+    , diretriz_ordenacao
+    , objetivo_ordenacao
     , meta_ordenacao
     , ds_meta
     , sg_unidade_meta

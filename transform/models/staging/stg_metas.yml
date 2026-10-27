@@ -13,6 +13,9 @@ models:
       - name: municipio
       - name: projeto_tipo
       - name: nu_ano_exercicio
+      - name: status
+      - name: diretriz_ordenacao
+      - name: objetivo_ordenacao
       - name: _ingested_at
         description: "Momento da carga na tabela raw (criado pelo notebook de carga)."
       - name: meta_ordenacao

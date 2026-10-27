@@ -10,6 +10,7 @@ WITH source AS (
         , municipio
         , projeto_tipo
         , nu_ano_exercicio
+        , status
         , _extract_municipio_id
         , _extract_ano
         , _ingested_at
@@ -51,6 +52,7 @@ WITH source AS (
         , municipio
         , projeto_tipo
         , nu_ano_exercicio
+        , status
         , _extract_municipio_id
         , _ingested_at
         , dir.ds_diretriz
@@ -68,6 +70,7 @@ WITH source AS (
         , municipio
         , projeto_tipo
         , nu_ano_exercicio
+        , status
         , _extract_municipio_id
         , _ingested_at
         , ds_diretriz
@@ -87,6 +90,7 @@ WITH source AS (
         , municipio
         , projeto_tipo
         , nu_ano_exercicio
+        , status
         , _extract_municipio_id
         , _ingested_at
         , ds_diretriz
@@ -119,6 +123,7 @@ WITH source AS (
         , municipio
         , projeto_tipo
         , nu_ano_exercicio
+        , status
         , _extract_municipio_id
         , _ingested_at
         , ds_diretriz

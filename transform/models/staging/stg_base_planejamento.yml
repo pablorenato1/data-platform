@@ -9,6 +9,7 @@ models:
       - name: municipio
       - name: projeto_tipo
       - name: nu_ano_exercicio
+      - name: status
       - name: _extract_municipio_id
         description: "Contexto da extração, não vem da API."
       - name: _ingested_at
