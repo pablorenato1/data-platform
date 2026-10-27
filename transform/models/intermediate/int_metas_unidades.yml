@@ -1,0 +1,32 @@
+version: 2
+
+models:
+  - name: int_metas_unidades
+    description: "stg_metas com o tipo de valor normalizado (seed unidades_medida) e flags de valores muito fora do comum. Mesma granularidade de stg_metas; nenhum valor é alterado."
+    columns:
+      - name: id_meta
+      - name: tipo_valor_meta
+        description: "tipo_valor da unidade da meta (sg_unidade_meta) no seed unidades_medida. Nunca deve ser nulo: unidade nova na API faz o teste falhar."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["quantidade", "percentual", "proporcao", "razao", "monetario", "taxa", "indice", "decimal"]
+      - name: tipo_valor_indicador
+        description: "tipo_valor da unidade do indicador (sg_unidade_indicador). Nulo quando a unidade do indicador não existe."
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["quantidade", "percentual", "proporcao", "razao", "monetario", "taxa", "indice", "decimal"]
+      - name: flag_alcancado_extremo
+        description: "vl_alcancado acima de var limite_alcancado_extremo."
+      - name: flag_plano_negativo
+        description: "vl_projetado_plano menor que zero."
+      - name: flag_plano_extremo
+        description: "Unidade 'quantidade' com vl_projetado_plano acima de var limite_plano_quantidade_extremo."
+      - name: flag_percentual_fora_faixa
+        description: "Unidade 'percentual' ou 'proporcao' com vl_projetado_plano fora de 0 a 100."
+      - name: flag_alcancado_sem_plano
+        description: "Informativa: vl_projetado_plano igual a zero com vl_alcancado maior que zero. Não entra em tem_flag_valor_extremo."
+      - name: tem_flag_valor_extremo
+        description: "Verdadeiro se qualquer flag extrema (alcancado_extremo, plano_negativo, plano_extremo, percentual_fora_faixa) estiver ativa."

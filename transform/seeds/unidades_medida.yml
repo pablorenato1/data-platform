@@ -1,0 +1,20 @@
+version: 2
+
+seeds:
+  - name: unidades_medida
+    description: "Siglas de unidade de medida da API do DigiSUS e o tipo de valor normalizado (tipo_valor) usado na camada intermediate."
+    columns:
+      - name: sg_unidade
+        description: "Sigla da unidade, como vem em sg_unidade_meta e sg_unidade_indicador."
+        tests:
+          - unique
+          - not_null
+      - name: no_unidade
+        description: "Nome da unidade, como vem em no_unidade_meta e no_unidade_indicador."
+      - name: tipo_valor
+        description: "Categoria normalizada da unidade."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["quantidade", "percentual", "proporcao", "razao", "monetario", "taxa", "indice", "decimal"]

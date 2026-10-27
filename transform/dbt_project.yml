@@ -41,3 +41,14 @@ models:
     marts:
       +materialized: table
       +schema: marts
+
+# Dados de referência (dbt seed). Ficam no schema intermediate, junto de quem os usa.
+seeds:
+  modelagem:
+    +schema: intermediate
+
+# Limites usados só para SINALIZAR valores muito fora do comum (flags em int_metas_unidades).
+# Nenhum valor é alterado ou removido.
+vars:
+  limite_alcancado_extremo: 1000          # vl_alcancado acima disso (10x a meta)
+  limite_plano_quantidade_extremo: 1000000 # vl_projetado_plano de unidade 'quantidade' acima disso
