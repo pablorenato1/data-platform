@@ -20,6 +20,8 @@ models:
       - name: sg_unidade_meta
       - name: no_unidade_meta
       - name: vl_projetado_plano
+      - name: vl_projetado_pas
+      - name: vl_executado_relatorio
       - name: vl_alcancado
       - name: ds_indicador
       - name: sg_unidade_indicador

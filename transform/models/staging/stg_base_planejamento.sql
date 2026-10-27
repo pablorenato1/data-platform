@@ -102,6 +102,8 @@ WITH source AS (
         , meta.no_unidade_indicador
         , meta.nu_linha_base
         , meta.vl_projetado_plano
+        , meta.vl_projetado_pas
+        , meta.vl_executado_relatorio
         , meta.vl_alcancado
         , meta.iniciativas 
         , meta.subfuncoes
@@ -132,6 +134,8 @@ WITH source AS (
         , nu_linha_base
         , no_unidade_meta
         , vl_projetado_plano
+        , vl_projetado_pas
+        , vl_executado_relatorio
         , vl_alcancado
         , ini.ds_iniciativa
         , subfuncoes
