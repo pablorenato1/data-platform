@@ -65,6 +65,10 @@ Cada município tem 4 relatórios por ano (`projeto_tipo`): `1º RDQA`, `2º RDQ
 - Em 97.818 das 177.461 combinações meta + indicador o `vl_alcancado` difere entre relatórios; em 14 o texto da meta e em 161 o plano mudam entre relatórios.
 - Flags extremas: 456 metas em um só relatório (pontual) e 238 em dois ou mais (recorrente).
 
+## Registro de inconsistências
+
+`int_inconsistencias` registra, sem alterar os dados, as diferenças entre relatórios e os valores fora do comum, em 10 tipos (seed `tipos_inconsistencia`). Na última execução: 3.131 ocorrências — meta ausente em algum relatório (293 metas), indicador ausente com a meta presente nos 4 (281 metas, 555 ocorrências), número de indicadores diferente (7), texto da meta diferente (14), plano diferente (161), valor alcançado muito acima do usual (681), plano negativo (10), plano muito alto (3) e, como informativa, alcance com plano zero (1.407).
+
 ## Camadas staging e marts
 
 _A documentar quando a modelagem estiver estável._

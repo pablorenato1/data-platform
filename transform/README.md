@@ -20,6 +20,7 @@ Configuradas em `dbt_project.yml`, cada uma em um schema próprio com o mesmo no
 - **`stg_diretrizes`, `stg_objetivos`, `stg_metas`, `stg_indicadores`, `stg_meta_subfuncoes`**: leem `stg_base_planejamento` e usam `dbt_utils.generate_surrogate_key` para gerar chaves. A lógica foi reconstruída a partir do SQL compilado (ver [ADR 0005](../docs/decisions/0005-modelos-reconstruidos.md)).
 - **`int_metas_unidades`** (schema `intermediate`): `stg_metas` mais `tipo_valor_meta` e `tipo_valor_indicador` (seed `seeds/unidades_medida.csv`) e flags de valores muito fora do comum (`flag_alcancado_extremo`, `flag_plano_negativo`, `flag_plano_extremo`, `flag_percentual_fora_faixa`, `flag_alcancado_sem_plano`, `tem_flag_valor_extremo`). As flags só sinalizam, nenhum valor é alterado; os limites são `vars` em `dbt_project.yml`. Ver [ADR 0008](../docs/decisions/0008-unidades-de-medida-na-intermediate.md).
 - **`int_metas_comparativo`** (schema `intermediate`): uma linha por meta + indicador (município, ano, `meta_ordenacao` e `ds_indicador`) com os 4 relatórios lado a lado (`_1q`, `_2q`, `_3q`, `_rag`), a quantidade de relatórios em que a meta aparece, diferenças de texto, indicador e plano, a amplitude de `vl_alcancado` e se as flags extremas são pontuais ou recorrentes. Ver [ADR 0009](../docs/decisions/0009-comparativo-entre-relatorios.md).
+- **`int_inconsistencias`** (schema `intermediate`): registro das inconsistências observadas, uma linha por ocorrência (tipos: meta ou indicador ausente em algum relatório, número de indicadores, texto ou plano diferentes, e valores fora do comum). **Não altera nenhum dado**; os textos públicos ficam no seed `tipos_inconsistencia`. Ver [ADR 0010](../docs/decisions/0010-registro-de-inconsistencias.md).
 - **Testes:** `not_null` e `accepted_values` no tipo de valor, `unique` na sigla do seed e testes de contagem (`int_metas_unidades` tem as linhas de `stg_metas`; `int_metas_comparativo` tem uma linha por meta) e `accepted_values` em `projeto_tipo` e `situacao_preenchimento` (`dbt test`).
 - **Pacote:** `dbt_utils` 1.4.1 (`packages.yml`).
 - O projeto e o profile ainda se chamam `modelagem`.
@@ -37,6 +38,14 @@ dbt test --profiles-dir .
 ```
 No Git Bash do Windows, exporte também `MSYS_NO_PATHCONV=1` antes de carregar o `.env`; sem isso o `DATABRICKS_HTTP_PATH` (`/sql/1.0/...`) é reescrito para `C:/Program Files/Git/...` e o `dbt debug` falha com erro 404.
 O `profiles.yml` (target `dev`, `threads: 1`) lê `DATABRICKS_HOST`, `DATABRICKS_HTTP_PATH`, `DATABRICKS_CATALOG` e `DBT_DATABRICKS_TOKEN`. `dbt run` executa SQL no seu warehouse e consome cota do Databricks. `target/`, `dbt_packages/` e `logs/` são ignorados pelo Git.
+
+## A cada nova ingestão
+
+A modelagem é totalmente derivada da tabela `raw.resultados_metas`, sem etapa manual. Depois de rodar o DAG e o notebook de [databricks/](../databricks/README.md), basta um comando, a partir desta pasta e com o `.env` carregado:
+```bash
+dbt build --profiles-dir .      # seeds, modelos e testes, na ordem das dependências
+```
+O resultado é determinístico: sobre os mesmos dados, o registro de inconsistências sai igual. Os testes não usam números fixos. Se a API trouxer um relatório, uma unidade ou um tipo novos, os testes falham de propósito: acrescente a linha correspondente em `seeds/unidades_medida.csv` ou `seeds/tipos_inconsistencia.csv` (os limites das flags estão em `vars`, em `dbt_project.yml`). Ainda não há execução automática do dbt no Airflow.
 
 ## Como se conecta
 
