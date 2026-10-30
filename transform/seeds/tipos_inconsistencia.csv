@@ -1,0 +1,11 @@
+codigo,categoria,titulo,descricao
+meta_ausente_em_relatorio,estrutura,Meta ausente em algum relatório,"A meta consta em alguns relatórios do município, mas não nos quatro (1º, 2º e 3º RDQA e RAG)."
+indicador_ausente_em_relatorio,estrutura,Indicador ausente em algum relatório,"A meta consta nos quatro relatórios, mas este indicador não consta em todos."
+numero_indicadores_difere,estrutura,Número de indicadores diferente entre relatórios,"A meta tem quantidades diferentes de indicadores nos relatórios."
+texto_meta_diferente,estrutura,Texto da meta diferente entre relatórios,"O texto da meta não é o mesmo em todos os relatórios."
+plano_diferente,estrutura,Valor planejado diferente entre relatórios,"O valor planejado da meta não é o mesmo em todos os relatórios."
+alcancado_extremo,valor,Valor alcançado muito acima do usual,"O valor alcançado informado está muito acima do usual para este campo (em geral de 0 a 100)."
+plano_negativo,valor,Valor planejado negativo,"O valor planejado informado para a meta é negativo."
+plano_extremo,valor,Valor planejado muito alto,"O valor planejado informado para a meta, em unidade de quantidade, é muito alto."
+percentual_fora_faixa,valor,Percentual fora da faixa de 0 a 100,"A meta está em unidade percentual ou proporção e o valor planejado está fora de 0 a 100."
+alcancado_sem_plano,informativa,Alcance informado com planejamento zero,"Há valor alcançado para uma meta cujo valor planejado é zero."

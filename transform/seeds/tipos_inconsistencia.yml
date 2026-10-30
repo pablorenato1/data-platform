@@ -1,0 +1,22 @@
+version: 2
+
+seeds:
+  - name: tipos_inconsistencia
+    description: "Tipos de inconsistência registrados em int_inconsistencias, com título e descrição neutros, prontos para exibição pública. Edite os textos aqui."
+    columns:
+      - name: codigo
+        tests:
+          - unique
+          - not_null
+      - name: categoria
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["estrutura", "valor", "informativa"]
+      - name: titulo
+        tests:
+          - not_null
+      - name: descricao
+        tests:
+          - not_null

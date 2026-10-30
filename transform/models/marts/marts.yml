@@ -1,0 +1,140 @@
+version: 2
+
+models:
+  - name: mart_relatorios
+    description: "Situação de cada relatório (1º, 2º, 3º RDQA e RAG) de cada município por ano, com a taxa de preenchimento das metas. Inclui os casos sem projeto e os municípios que não vieram na extração. Uma linha por município, ano e relatório. Nenhum valor é alterado."
+    columns:
+      - name: municipio_id
+        description: "Código do município na extração (IBGE sem o dígito verificador)."
+        tests:
+          - not_null
+      - name: ano
+        tests:
+          - not_null
+      - name: projeto_tipo
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["1º RDQA", "2º RDQA", "3º RDQA", "RAG"]
+      - name: status
+        description: "Status original do relatório, sem alteração. Nulo quando o município não veio na extração (tem_dados_na_extracao falso)."
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["Avaliado", "Aprovado", "Aprovado com Ressalvas", "Não Aprovado", "Em Análise no Conselho de Saúde", "Retornado para Ajustes", "Em Elaboração", "Não Iniciado", "sem_projeto_identificado"]
+      - name: taxa_preenchimento
+        description: "Metas com vl_alcancado maior ou igual a zero (não nulo) dividido pelo total de metas. Nulo quando o relatório não tem metas."
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+      - name: taxa_acima_de_zero
+        description: "Metas com vl_alcancado maior que zero, sobre o total de metas."
+      - name: taxa_zero
+        description: "Metas com vl_alcancado igual a zero, sobre o total de metas. Zero é resposta do responsável."
+      - name: taxa_nulo
+        description: "Metas com vl_alcancado nulo, sobre o total de metas. Nulo é resposta do responsável."
+      - name: media_alcancado
+        description: "Média simples de vl_alcancado das metas do relatório, incluindo zeros e ignorando nulos."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [municipio_id, ano, projeto_tipo]
+
+  - name: fact_metas
+    description: "Uma linha por meta + indicador + relatório, com valores, tipo de valor, status, situação de preenchimento e flags. Nenhum valor é alterado; o texto de cada relatório é mantido como foi preenchido."
+    columns:
+      - name: municipio_id
+        tests:
+          - not_null
+      - name: ano
+        tests:
+          - not_null
+      - name: meta_ordenacao
+        description: "Numeração da meta, usada para acompanhar a mesma meta entre os relatórios."
+      - name: tipo_valor_meta
+        tests:
+          - not_null
+      - name: status
+        description: "Status original do relatório."
+        tests:
+          - not_null
+      - name: ds_diretriz
+        description: "Texto da diretriz da meta, como no relatório."
+      - name: ds_objetivo
+        description: "Texto do objetivo da meta, como no relatório."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [id_indicador_base, projeto_tipo]
+
+  - name: fact_inconsistencias
+    description: "Registro de inconsistências (int_inconsistencias) com o código do município. Os dados não são corrigidos: só se registra o que foi observado."
+    columns:
+      - name: id_inconsistencia
+        tests:
+          - unique
+          - not_null
+      - name: municipio_id
+        tests:
+          - not_null
+
+  - name: mart_faixas_alcancado
+    description: "Quantos indicadores ficaram em cada faixa de vl_alcancado (de 10 em 10 pontos), por relatório, diretriz, objetivo e meta. Faixa 0 = sem valor (nulo); 1 = menos de 10%; 2 a 10 = de 10% a menos de 20% até de 90% a menos de 100%; 11 = 100% ou mais. Só aparecem faixas com indicadores."
+    columns:
+      - name: nivel
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["relatorio", "diretriz", "objetivo", "meta"]
+      - name: faixa_ordem
+        tests:
+          - accepted_values:
+              arguments:
+                values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+                quote: false
+      - name: pct_indicadores
+        description: "Indicadores da faixa sobre o total de indicadores do nível (qtd_indicadores_nivel)."
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [nivel, municipio_id, ano, projeto_tipo, ordenacao, faixa_ordem]
+
+  - name: mart_metas_evolucao
+    description: "Cada meta + indicador com os 4 relatórios do ano lado a lado (1º, 2º, 3º RDQA e RAG): plano, executado, alcançado e status. Cada RDQA vale só para o seu quadrimestre e o RAG para o ano; os valores não se acumulam."
+    columns:
+      - name: id_indicador_base
+        tests:
+          - unique
+          - not_null
+      - name: municipio_id
+        tests:
+          - not_null
+
+  - name: mart_completude_niveis
+    description: "Taxa de preenchimento das metas por diretriz e por objetivo, em cada relatório. Zero e nulo são respostas dos responsáveis e aparecem separados. Nível de meta e de indicador: ver fact_metas."
+    columns:
+      - name: nivel
+        description: "diretriz, objetivo ou meta. Filtre por nivel e ordenacao (a numeração, por exemplo 1, 1.1 ou 1.1.1)."
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["diretriz", "objetivo", "meta"]
+      - name: descricao
+        description: "Texto da diretriz, do objetivo ou da meta, como no relatório."
+      - name: taxa_preenchimento
+        description: "Metas com vl_alcancado maior ou igual a zero (não nulo) dividido pelo total de metas do nível."
+      - name: media_alcancado
+        description: "Média simples de vl_alcancado das metas do nível, incluindo zeros e ignorando nulos."
+      - name: qtd_metas_com_flag_extrema
+        description: "Metas do nível com algum valor muito fora do comum (flag)."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [nivel, municipio_id, ano, projeto_tipo, ordenacao]
