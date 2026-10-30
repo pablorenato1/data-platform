@@ -18,6 +18,7 @@ Documentação de apoio ao projeto. Não contém código executável.
   | [0008](decisions/0008-unidades-de-medida-na-intermediate.md) | Tipo de valor das unidades na camada intermediate |
   | [0009](decisions/0009-comparativo-entre-relatorios.md) | Comparativo entre os 4 relatórios e zero/nulo como resposta |
   | [0010](decisions/0010-registro-de-inconsistencias.md) | Registro de inconsistências, sem alterar os dados, e reprodutível |
+  | [0011](decisions/0011-marts-status-e-ano-inicial.md) | Marts, status do relatório, preenchimento e ano inicial |
 
 - [dicionario-de-dados.md](dicionario-de-dados.md): **em andamento.** Lista os campos da tabela raw `resultados_metas`, com as descrições ainda por preencher. Camadas staging e marts entram quando a modelagem estiver estável (ADR 0005 explica a origem dos modelos atuais).
 
