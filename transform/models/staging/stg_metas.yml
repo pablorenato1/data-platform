@@ -11,9 +11,15 @@ models:
       - name: id_diretriz
         description: "Chave gerada com dbt_utils.generate_surrogate_key a partir de: municipio, projeto_tipo, nu_ano_exercicio, diretriz_ordenacao."
       - name: municipio
+      - name: municipio_id
+        description: "Código do município na extração (código IBGE sem o dígito verificador), de _extract_municipio_id."
       - name: projeto_tipo
       - name: nu_ano_exercicio
       - name: status
+      - name: ds_diretriz
+        description: "Texto da diretriz da meta, no relatório."
+      - name: ds_objetivo
+        description: "Texto do objetivo da meta, no relatório."
       - name: diretriz_ordenacao
       - name: objetivo_ordenacao
       - name: _ingested_at

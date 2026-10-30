@@ -20,6 +20,7 @@ SELECT
     , max(id_meta_base) AS id_meta_base
     , max(id_objetivo_base) AS id_objetivo_base
     , max(id_diretriz_base) AS id_diretriz_base
+    , max(municipio_id) AS municipio_id
     , municipio
     , nu_ano_exercicio
     , max(diretriz_ordenacao) AS diretriz_ordenacao

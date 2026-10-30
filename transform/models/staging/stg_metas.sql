@@ -6,11 +6,14 @@ WITH base AS (
 , deduplicado AS (
     SELECT DISTINCT
         municipio
+        , _extract_municipio_id AS municipio_id
         , projeto_tipo
         , nu_ano_exercicio
         , status
         , _ingested_at
+        , ds_diretriz
         , diretriz_ordenacao
+        , ds_objetivo 
         , objetivo_ordenacao 
         , meta_ordenacao
         , trim(ds_meta) as ds_meta
@@ -37,11 +40,14 @@ SELECT
     , {{ dbt_utils.generate_surrogate_key(['municipio', 'projeto_tipo', 'nu_ano_exercicio', 'diretriz_ordenacao']) }} AS id_diretriz
     
     , municipio
+    , municipio_id
     , projeto_tipo
     , nu_ano_exercicio
     , status
     , _ingested_at
+    , ds_diretriz
     , diretriz_ordenacao
+    , ds_objetivo
     , objetivo_ordenacao
     , meta_ordenacao
     , ds_meta

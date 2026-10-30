@@ -37,7 +37,7 @@ SELECT
     , CASE
         WHEN metas.vl_alcancado IS NULL THEN 'nulo'
         WHEN metas.vl_alcancado = 0 THEN 'zero'
-        ELSE 'preenchido'
+        ELSE 'acima_de_zero'
       END AS situacao_preenchimento
 FROM metas
 LEFT JOIN unidades AS um ON metas.sg_unidade_meta = um.sg_unidade

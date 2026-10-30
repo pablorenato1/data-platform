@@ -50,5 +50,6 @@ seeds:
 # Limites usados só para SINALIZAR valores muito fora do comum (flags em int_metas_unidades).
 # Nenhum valor é alterado ou removido.
 vars:
+  ano_inicial: 2018                        # 2016 e 2017 não têm dados (todas as linhas são 'sem projeto') e são ignorados
   limite_alcancado_extremo: 1000          # vl_alcancado acima disso (10x a meta)
   limite_plano_quantidade_extremo: 1000000 # vl_projetado_plano de unidade 'quantidade' acima disso
