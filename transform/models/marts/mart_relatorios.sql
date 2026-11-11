@@ -50,8 +50,24 @@ WITH municipios AS (
         , sum(CASE WHEN situacao_preenchimento = 'zero' THEN 1 ELSE 0 END) AS qtd_metas_zero
         , sum(CASE WHEN situacao_preenchimento = 'nulo' THEN 1 ELSE 0 END) AS qtd_metas_nulo
         , round(avg(vl_alcancado), 2) AS media_alcancado
+        , round(percentile(vl_alcancado, 0.5), 2) AS mediana_alcancado
     FROM metas
     GROUP BY municipio_id, ano, projeto_tipo
+)
+
+-- Uma linha por indicador (meta + indicador) e relatório, contada por classe de alcance
+, indicadores AS (
+    SELECT
+        municipio_id
+        , CAST(nu_ano_exercicio AS INT) AS ano
+        , projeto_tipo
+        , count(*) AS ind_total
+        , sum(CASE WHEN classe_alcance = 'atingida' THEN 1 ELSE 0 END) AS ind_atingida
+        , sum(CASE WHEN classe_alcance = 'parcial' THEN 1 ELSE 0 END) AS ind_parcial
+        , sum(CASE WHEN classe_alcance = 'zero' THEN 1 ELSE 0 END) AS ind_zero
+        , sum(CASE WHEN classe_alcance = 'sem_valor' THEN 1 ELSE 0 END) AS ind_sem_valor
+    FROM {{ ref('int_metas_unidades') }}
+    GROUP BY municipio_id, CAST(nu_ano_exercicio AS INT), projeto_tipo
 )
 
 SELECT
@@ -75,8 +91,16 @@ SELECT
     , round(c.qtd_metas_zero / c.qtd_metas, 4) AS taxa_zero
     , round(c.qtd_metas_nulo / c.qtd_metas, 4) AS taxa_nulo
     , c.media_alcancado
+    , c.mediana_alcancado
+    , coalesce(i.ind_total, 0) AS ind_total
+    , coalesce(i.ind_atingida, 0) AS ind_atingida
+    , coalesce(i.ind_parcial, 0) AS ind_parcial
+    , coalesce(i.ind_zero, 0) AS ind_zero
+    , coalesce(i.ind_sem_valor, 0) AS ind_sem_valor
 FROM espinha AS e
 LEFT JOIN {{ ref('stg_relatorios') }} AS r
     ON e.municipio_id = r.municipio_id AND e.ano = r.ano AND e.tipo_codigo = r.tipo_codigo
 LEFT JOIN completude AS c
     ON e.municipio_id = c.municipio_id AND e.ano = c.ano AND e.projeto_tipo = c.projeto_tipo
+LEFT JOIN indicadores AS i
+    ON e.municipio_id = i.municipio_id AND e.ano = i.ano AND e.projeto_tipo = i.projeto_tipo
