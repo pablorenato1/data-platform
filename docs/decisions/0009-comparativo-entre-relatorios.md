@@ -1,0 +1,11 @@
+# 0009. Comparativo entre os 4 relatórios e zero/nulo como resposta
+
+**Contexto.** Cada município entrega 4 relatórios por ano: 1º, 2º e 3º RDQA (quadrimestres) e o RAG (anual). Interessa saber se uma diferença ou um valor fora do comum aparece em um só relatório (pontual) ou se se repete nos outros (recorrente). Os ids `id_*` incluem `projeto_tipo` (ADR 0007), então não casam a mesma meta entre relatórios. Zero e nulo em `vl_alcancado` são respostas dos responsáveis ("sem dado para esta meta"), e não podem ser descartados.
+
+**Decisão.**
+- Casar a mesma meta e indicador pela chave sem o tipo: município, ano, `meta_ordenacao` e `ds_indicador` (`id_indicador_base`; também `id_meta_base`, `id_objetivo_base` e `id_diretriz_base`). Uma meta pode ter vários indicadores (106 metas têm), e cada um é uma linha. Em 99,5% das combinações meta + indicador (176.613 de 177.461) a chave aparece nos 4 relatórios.
+- Criar `int_metas_comparativo` (uma linha por meta + indicador, relatórios lado a lado) com `qtd_relatorios_presentes`, flags de texto da meta e plano diferentes, `vl_alcancado_amplitude`, `qtd_relatorios_com_flag_extrema` e as flags `flag_extrema_pontual` (1 relatório) e `flag_extrema_recorrente` (2 ou mais). Os valores de plano, executado e alcançado são da meta e se repetem nas linhas dos seus indicadores. `flag_chave_repetida` é só uma guarda (hoje 0) e é testada.
+- Em `int_metas_unidades`, `situacao_preenchimento` classifica `vl_alcancado` em `nulo`, `zero` ou `preenchido`, sem descartar nenhum.
+- Passar `status` (do relatório), `diretriz_ordenacao` e `objetivo_ordenacao` pelo staging, que já estavam na origem.
+
+**Consequências.** `vl_alcancado` não é presumido acumulado: o comparativo só expõe a diferença entre relatórios. Flags e situação são informativas; nenhum valor é alterado. Um valor novo em `projeto_tipo` faz o teste falhar, porque o comparativo conhece só os 4 relatórios atuais. Uma primeira versão agrupava só por meta e juntava, com `max()`, os indicadores de 106 metas com vários indicadores; a verificação nos dados (403 grupos "repetidos", todos explicados pelo indicador) levou ao grão meta + indicador. Em 7 dessas metas o número de indicadores muda entre relatórios. A completude por diretriz, objetivo e indicador ainda não foi modelada.

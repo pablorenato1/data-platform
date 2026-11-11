@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: stg_relatorios
+    description: "Um relatório por município, ano e tipo, com o status original. Inclui os casos sem projeto. Anos anteriores a var ano_inicial são ignorados."
+    columns:
+      - name: municipio_id
+        tests:
+          - not_null
+      - name: ano
+        tests:
+          - not_null
+      - name: tipo_codigo
+        description: "10 = 1º RDQA, 11 = 2º RDQA, 12 = 3º RDQA, 13 = RAG (como no tap-digisus)."
+      - name: projeto_tipo
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["1º RDQA", "2º RDQA", "3º RDQA", "RAG"]
+      - name: status
+        description: "Status original do relatório, sem alteração."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Avaliado", "Aprovado", "Aprovado com Ressalvas", "Não Aprovado", "Em Análise no Conselho de Saúde", "Retornado para Ajustes", "Em Elaboração", "Não Iniciado", "sem_projeto_identificado"]
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [municipio_id, ano, tipo_codigo]

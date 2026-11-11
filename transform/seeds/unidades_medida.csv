@@ -1,0 +1,9 @@
+sg_unidade,no_unidade,tipo_valor
+Num,Número,quantidade
+PERC,Percentual,percentual
+PROP,Proporção,proporcao
+RAZ,Razão,razao
+MOE,Moeda,monetario
+TAXA,Taxa,taxa
+IND,Índice,indice
+DEC,Decimal,decimal

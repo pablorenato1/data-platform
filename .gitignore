@@ -44,3 +44,7 @@ logs/
 Thumbs.db
 
 transform/.user.yml
+
+# Site: dados gerados por export/exportar_site.py
+site/data/
+site/data.tmp/

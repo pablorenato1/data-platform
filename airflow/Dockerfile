@@ -22,7 +22,13 @@ RUN python3.11 -m venv /opt/airflow/meltano-venv && \
     /opt/airflow/meltano-venv/bin/pip install --no-cache-dir meltano virtualenv
 
 
-# Adicionar o meltano ao PATH 
+# dbt em um venv separado, para não conflitar com as dependências do Airflow nem do Meltano.
+# Versões iguais às usadas no desenvolvimento local (transform/README.md).
+RUN python3.11 -m venv /opt/airflow/dbt-venv && \
+    /opt/airflow/dbt-venv/bin/pip install --no-cache-dir --upgrade pip && \
+    /opt/airflow/dbt-venv/bin/pip install --no-cache-dir dbt-core==1.12.3 dbt-databricks==1.12.5
+
+# Adicionar o meltano ao PATH
 ENV PATH="/opt/airflow/meltano-venv/bin:$PATH"
 
 # ====================================================================

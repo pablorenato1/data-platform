@@ -1,0 +1,41 @@
+name: Problema no código, no pipeline ou na documentação
+description: Erro, comportamento inesperado ou sugestão sobre o projeto em si (não sobre os dados de um município).
+title: "[Projeto] "
+labels: ["projeto"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use este formulário para assuntos técnicos: extração, Airflow, dbt, exportação, o site ou a documentação.
+        Se o problema é um valor que parece errado para um município, use o formulário "Relato de erro ou dúvida sobre os dados".
+  - type: dropdown
+    id: parte
+    attributes:
+      label: Parte do projeto
+      options:
+        - Extração (Meltano e tap-digisus)
+        - Orquestração (Airflow)
+        - Carga (Databricks)
+        - Modelagem (dbt)
+        - Exportação (export/)
+        - Site
+        - Documentação
+        - Outra
+    validations:
+      required: true
+  - type: textarea
+    id: o-que-aconteceu
+    attributes:
+      label: O que aconteceu
+      description: Descreva o problema ou a sugestão. Se houver mensagem de erro, cole aqui.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduzir
+    attributes:
+      label: Como reproduzir
+      description: Os passos ou comandos que levam ao problema, e o ambiente (sistema operacional, versões), se souber.
+  - type: textarea
+    id: esperado
+    attributes:
+      label: O que esperava

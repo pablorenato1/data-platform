@@ -61,7 +61,7 @@ Depois da DAG, rode o notebook de [databricks/](databricks/README.md) para criar
 | Orquestração (DAG mensal, Docker local) | Pronta |
 | Envio dos Parquet ao Volume (DAG) | Pronto |
 | Carga Volume → tabela raw (notebook) | Pronta, executada manualmente |
-| Modelagem dbt | **Em andamento**: `staging` versionado; `intermediate` e `marts` ainda não existem |
+| Modelagem dbt | **Em andamento**: `staging`, `intermediate` e `marts` (relatórios, metas, inconsistências, completude); falta o export |
 | Exportação para Parquet | Planejada |
 | Site estático | Planejado |
 

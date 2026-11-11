@@ -1,0 +1,22 @@
+version: 2
+
+seeds:
+  - name: municipios_pe
+    description: "Municípios de Pernambuco (mesma lista usada pelo tap-digisus, extraction/tap-digisus/tap_digisus/data/municipios_pe.json). id_extracao é o código IBGE sem o dígito verificador, usado em _extract_municipio_id."
+    config:
+      column_types:
+        id_ibge: string
+        id_extracao: string
+    columns:
+      - name: id_extracao
+        description: "Código IBGE de 7 dígitos sem o último dígito, como em _extract_municipio_id."
+        tests:
+          - unique
+          - not_null
+      - name: id_ibge
+        tests:
+          - unique
+          - not_null
+      - name: nome
+        tests:
+          - not_null

@@ -6,16 +6,22 @@ WITH base AS (
 , deduplicado AS (
     SELECT DISTINCT
         municipio
+        , _extract_municipio_id AS municipio_id
         , projeto_tipo
         , nu_ano_exercicio
+        , status
         , _ingested_at
+        , ds_diretriz
         , diretriz_ordenacao
+        , ds_objetivo 
         , objetivo_ordenacao 
         , meta_ordenacao
         , trim(ds_meta) as ds_meta
         , sg_unidade_meta
         , no_unidade_meta
         , vl_projetado_plano
+        , vl_projetado_pas
+        , vl_executado_relatorio
         , vl_alcancado
         
         -- ADICIONADO: Puxando os dados do indicador direto para a Meta
@@ -34,14 +40,22 @@ SELECT
     , {{ dbt_utils.generate_surrogate_key(['municipio', 'projeto_tipo', 'nu_ano_exercicio', 'diretriz_ordenacao']) }} AS id_diretriz
     
     , municipio
+    , municipio_id
     , projeto_tipo
     , nu_ano_exercicio
+    , status
     , _ingested_at
+    , ds_diretriz
+    , diretriz_ordenacao
+    , ds_objetivo
+    , objetivo_ordenacao
     , meta_ordenacao
     , ds_meta
     , sg_unidade_meta
     , no_unidade_meta
     , vl_projetado_plano
+    , vl_projetado_pas
+    , vl_executado_relatorio
     , vl_alcancado
     
     -- ADICIONADO: Passando os dados do indicador para a frente

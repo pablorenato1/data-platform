@@ -5,9 +5,29 @@ from pathlib import Path
 import os
 
 from airflow.sdk import dag
+from airflow.providers.smtp.notifications.smtp import SmtpNotifier
 from airflow.providers.standard.operators.bash import BashOperator
+from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
 
 MUNICIPIOS_PATH = Path("/opt/airflow/extraction/tap-digisus/tap_digisus/data/municipios_pe.json")
+
+# E-mail de aviso ao fim de cada execução da DAG (ok ou falha). Sem NOTIFY_EMAIL no .env, nada é enviado.
+NOTIFY_EMAIL = os.environ.get("NOTIFY_EMAIL")
+LINK_EXECUCAO = "http://localhost:8080/dags/{{ dag.dag_id }}/runs/{{ run_id }}"
+
+
+def _aviso(titulo: str) -> list[SmtpNotifier]:
+    if not NOTIFY_EMAIL:
+        return []
+    return [
+        SmtpNotifier(
+            smtp_conn_id="smtp_default",
+            to=NOTIFY_EMAIL,
+            subject=f"[DigiSUS] {{{{ dag.dag_id }}}}: {titulo} ({{{{ run_id }}}})",
+            html_content=f"<p>Execução <b>{{{{ run_id }}}}</b> da DAG <b>{{{{ dag.dag_id }}}}</b>: {titulo}.</p>"
+            f"<p><a href=\"{LINK_EXECUCAO}\">Abrir no Airflow</a></p>",
+        )
+    ]
 
 def _load_municipios() -> list[dict]:
     with MUNICIPIOS_PATH.open(encoding="utf-8") as f:
@@ -21,6 +41,8 @@ def _load_municipios() -> list[dict]:
     catchup=False,
     max_active_tasks=6,
     tags=["digisus", "meltano", "databricks", "extraction"],
+    on_success_callback=_aviso("concluída com sucesso"),
+    on_failure_callback=_aviso("FALHOU"),
 )
 def digisus_extraction():
     municipios = _load_municipios()
@@ -83,6 +105,16 @@ def digisus_extraction():
         retry_delay=timedelta(minutes=5),
     ).expand(params=[{"municipio_id": m["id"], "municipio_nome": m["nome"]} for m in municipios])
 
-    discover_catalog >> extract_and_upload
+    # Só roda quando todos os municípios foram enviados ao Volume. Dispara a DAG digisus_carga
+    # (Job do Databricks) e espera terminar: se a carga falhar, esta DAG também falha.
+    dispara_carga = TriggerDagRunOperator(
+        task_id="dispara_carga",
+        trigger_dag_id="digisus_carga",
+        wait_for_completion=True,
+        poke_interval=60,
+        failed_states=["failed"],
+    )
+
+    discover_catalog >> extract_and_upload >> dispara_carga
 
 digisus_extraction()

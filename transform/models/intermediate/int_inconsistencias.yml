@@ -1,0 +1,37 @@
+version: 2
+
+models:
+  - name: int_inconsistencias
+    description: "Registro das inconsistências observadas nos dados informados pelos municípios, uma linha por ocorrência. Os dados não são corrigidos nem removidos: o modelo só registra, para ser exibido depois (por exemplo, no site). Os textos públicos vêm do seed tipos_inconsistencia."
+    columns:
+      - name: id_inconsistencia
+        description: "Chave da ocorrência: tipo, município, ano, meta_ordenacao e indicador."
+        tests:
+          - unique
+          - not_null
+      - name: id_meta_base
+        description: "Mesma chave de int_metas_comparativo, para ligar a ocorrência à meta."
+        tests:
+          - not_null
+      - name: codigo
+        description: "Tipo da inconsistência (ver seed tipos_inconsistencia)."
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('tipos_inconsistencia')
+                field: codigo
+      - name: categoria
+        description: "estrutura (diferença entre relatórios), valor (valor fora do comum) ou informativa."
+        tests:
+          - not_null
+      - name: titulo
+        description: "Título público da inconsistência."
+      - name: descricao
+        description: "Descrição pública e neutra da inconsistência."
+      - name: escopo
+        description: "meta ou indicador."
+      - name: relatorios_afetados
+        description: "Relatórios em que a inconsistência se manifesta (quando se aplica)."
+      - name: detalhe
+        description: "Valores observados que ajudam a entender o caso."
