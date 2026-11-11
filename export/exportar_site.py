@@ -2,6 +2,8 @@
 
 Lê só dos marts (leitura, sem alterar nada) e grava em site/data/:
   municipios.json             lista de municípios, anos e cobertura
+  resumo_mesorregiao.json     o mesmo resumo, uma vez por mesorregião
+  municipios_resumo.json      por município, ano e relatório: status, classes e faixas (aba Municípios)
   resumo.json                 estado: municípios por status, indicadores por classe e por faixa de alcance, por ano e relatório
   mapa.json                   por ano e relatório: indicadores atingidos e total de cada município (mapa)
   relatorios/<id>.json        os 4 relatórios de cada ano do município, com classes e faixas de alcance
@@ -56,6 +58,31 @@ def gravar(caminho: Path, conteudo) -> None:
     caminho.write_text(json.dumps(conteudo, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
 
+def montar_resumo(relatorios: list[dict], faixas: list[dict]) -> dict:
+    """Municípios por status, indicadores por classe e por faixa de alcance, por ano e relatório."""
+    status_por = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+    classes_por = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+    for r in relatorios:
+        ano, tipo = str(r["ano"]), r["projeto_tipo"]
+        status_por[ano][tipo][r["status"] or "sem_dados"] += 1
+        for classe in ("atingida", "parcial", "zero", "sem_valor"):
+            classes_por[ano][tipo][classe] += r[f"ind_{classe}"]
+    faixas_por = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
+    for f in faixas:
+        faixas_por[str(f["ano"])][f["projeto_tipo"]][f["faixa_ordem"]] += f["qtd_indicadores"]
+    return {
+        ano: {
+            tipo: {
+                "status": sorted(status_por[ano][tipo].items(), key=lambda kv: -kv[1]),
+                "classes": dict(classes_por[ano][tipo]),
+                "faixas": sorted(faixas_por[ano][tipo].items()),
+            }
+            for tipo in TIPOS
+        }
+        for ano in status_por
+    }
+
+
 def main() -> int:
     conexao = sql.connect(
         server_hostname=os.environ["DATABRICKS_HOST"].replace("https://", ""),
@@ -103,6 +130,7 @@ def main() -> int:
         por_municipio[r["municipio_id"]].append(r)
 
     municipios = []
+    resumo_municipios = {}
     anos_todos = set()
     for mid, linhas in sorted(por_municipio.items(), key=lambda kv: kv[1][0]["municipio"]):
         primeira = linhas[0]
@@ -127,6 +155,11 @@ def main() -> int:
                 "faixas": sorted(faixas_por_relatorio.get((mid, r["ano"], r["projeto_tipo"]), [])),
             })
             anos_todos.add(r["ano"])
+        resumo_municipios[mid] = {
+            ano: {x["tipo"]: {"s": x["status"], "c": [x["classes"]["atingida"], x["classes"]["parcial"], x["classes"]["zero"], x["classes"]["sem_valor"]], "f": x["faixas"]}
+                  for x in rels}
+            for ano, rels in anos.items()
+        }
         gravar(tmp / "relatorios" / f"{mid}.json", {
             "id": mid,
             "nome": primeira["municipio"],
@@ -138,37 +171,27 @@ def main() -> int:
             "id": mid,
             "nome": primeira["municipio"],
             "microrregiao": primeira["microrregiao"],
+            "mesorregiao": primeira["mesorregiao"],
             "tem_dados": any(r["tem_dados_na_extracao"] for r in linhas),
             "anos_com_metas": sorted({r["ano"] for r in linhas if r["tem_metas"]}),
         })
 
     # --- resumo.json (estado) e mapa.json -------------------------------------
-    status_por = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
-    classes_por = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
     mapa = defaultdict(lambda: defaultdict(dict))
     for r in relatorios:
-        ano, tipo = str(r["ano"]), r["projeto_tipo"]
-        status_por[ano][tipo][r["status"] or "sem_dados"] += 1
-        for classe in ("atingida", "parcial", "zero", "sem_valor"):
-            classes_por[ano][tipo][classe] += r[f"ind_{classe}"]
         if r["ind_total"] > 0:
-            mapa[ano][tipo][r["municipio_id"]] = [r["ind_atingida"], r["ind_total"]]
-    faixas_por = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
-    for f in faixas:
-        faixas_por[str(f["ano"])][f["projeto_tipo"]][f["faixa_ordem"]] += f["qtd_indicadores"]
-    gravar(tmp / "resumo.json", {
-        ano: {
-            tipo: {
-                "status": sorted(status_por[ano][tipo].items(), key=lambda kv: -kv[1]),
-                "classes": dict(classes_por[ano][tipo]),
-                "faixas": sorted(faixas_por[ano][tipo].items()),
-            }
-            for tipo in TIPOS
-        }
-        for ano in status_por
+            mapa[str(r["ano"])][r["projeto_tipo"]][r["municipio_id"]] = [r["ind_atingida"], r["ind_total"]]
+    gravar(tmp / "resumo.json", montar_resumo(relatorios, faixas))
+    # Mesma estrutura do resumo.json, uma por mesorregião (o site usa quando se escolhe uma região)
+    meso_de = {r["municipio_id"]: r["mesorregiao"] for r in relatorios}
+    gravar(tmp / "resumo_mesorregiao.json", {
+        meso: montar_resumo([r for r in relatorios if r["mesorregiao"] == meso],
+                            [f for f in faixas if meso_de.get(f["municipio_id"]) == meso])
+        for meso in sorted({m for m in meso_de.values() if m})
     })
     gravar(tmp / "mapa.json", mapa)
 
+    gravar(tmp / "municipios_resumo.json", resumo_municipios)
     gravar(tmp / "municipios.json", {
         "gerado_em": gerado_em,
         "anos": sorted(anos_todos),

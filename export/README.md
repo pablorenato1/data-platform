@@ -8,6 +8,8 @@ Exporta os marts da modelagem ([transform/](../transform/README.md)) para os arq
 |---|---|---|
 | `municipios.json` | Lista de municípios, anos, cobertura e data de geração | `mart_relatorios` |
 | `resumo.json` | Estado: municípios por status e indicadores por classe de alcance, por ano e relatório | `mart_relatorios` |
+| `resumo_mesorregiao.json` | O mesmo resumo do estado, uma vez por mesorregião do IBGE | `mart_relatorios`, `mart_faixas_alcancado` |
+| `municipios_resumo.json` | Por município, ano e relatório: situação, indicadores por classe e faixas (alimenta a aba Municípios) | `mart_relatorios`, `mart_faixas_alcancado` |
 | `mapa.json` | Por ano e relatório: indicadores atingidos e total de cada município | `mart_relatorios` |
 | `relatorios/<id>.json` | Os 4 relatórios de cada ano do município: status, mediana, classes e faixas de alcance | `mart_relatorios`, `mart_faixas_alcancado` |
 | `metas/<id>-<ano>.json` | Diretrizes, objetivos, metas e indicadores do município no ano, com os 4 relatórios lado a lado | `mart_metas_evolucao`, `mart_completude_niveis` (texto de diretrizes e objetivos) |
