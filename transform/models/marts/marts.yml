@@ -37,6 +37,18 @@ models:
         description: "Metas com vl_alcancado nulo, sobre o total de metas. Nulo é resposta do responsável."
       - name: media_alcancado
         description: "Média simples de vl_alcancado das metas do relatório, incluindo zeros e ignorando nulos."
+      - name: mediana_alcancado
+        description: "Mediana de vl_alcancado das metas do relatório, incluindo zeros e ignorando nulos. Menos sensível que a média a valores muito altos."
+      - name: ind_total
+        description: "Número de indicadores (meta + indicador) do relatório. As colunas ind_* contam indicadores, não metas."
+      - name: ind_atingida
+        description: "Indicadores com alcance de 100% ou mais."
+      - name: ind_parcial
+        description: "Indicadores com alcance acima de zero e abaixo de 100%."
+      - name: ind_zero
+        description: "Indicadores com alcance igual a zero (valor negativo, se houver, também entra aqui)."
+      - name: ind_sem_valor
+        description: "Indicadores com alcance vazio."
     tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
@@ -68,6 +80,8 @@ models:
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns: [id_indicador_base, projeto_tipo]
+          config:
+            severity: warn  # o texto do indicador pode se repetir dentro da meta; ver int_inconsistencias
 
   - name: fact_inconsistencias
     description: "Registro de inconsistências (int_inconsistencias) com o código do município. Os dados não são corrigidos: só se registra o que foi observado."

@@ -39,6 +39,16 @@ SELECT
         WHEN metas.vl_alcancado = 0 THEN 'zero'
         ELSE 'acima_de_zero'
       END AS situacao_preenchimento
+
+    -- Classe do alcance (regra do site; os valores não são alterados). Atingida: 100% ou mais;
+    -- parcial: acima de zero e abaixo de 100%; zero: igual a zero (um valor negativo, se houver,
+    -- também entra aqui e é registrado em int_inconsistencias); sem valor: campo vazio.
+    , CASE
+        WHEN metas.vl_alcancado IS NULL THEN 'sem_valor'
+        WHEN metas.vl_alcancado >= 100 THEN 'atingida'
+        WHEN metas.vl_alcancado > 0 THEN 'parcial'
+        ELSE 'zero'
+      END AS classe_alcance
 FROM metas
 LEFT JOIN unidades AS um ON metas.sg_unidade_meta = um.sg_unidade
 LEFT JOIN unidades AS ui ON metas.sg_unidade_indicador = ui.sg_unidade

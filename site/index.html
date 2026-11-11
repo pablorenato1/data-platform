@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Metas de saúde dos municípios de Pernambuco</title>
+  <meta name="description" content="Planejamento em saúde dos municípios de Pernambuco: o que foi proposto e o que foi alcançado em cada relatório, a partir dos dados públicos do DigiSUS.">
+  <link rel="icon" href="data:,">
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem('tema')||'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topo">
+    <div class="miolo topo-conteudo">
+      <div>
+        <h1>Metas de saúde dos municípios de Pernambuco</h1>
+        <p class="subtitulo">O que cada município planejou e quanto informou ter alcançado, em cada relatório do ano. Dados públicos do DigiSUS.</p>
+      </div>
+      <button id="tema" class="botao-tema" type="button" aria-label="Alternar entre tema claro e escuro">Tema</button>
+    </div>
+  </header>
+
+  <main class="miolo" id="conteudo">
+    <noscript><p class="aviso">Este site precisa de JavaScript para exibir os gráficos.</p></noscript>
+
+    <form class="filtros" id="filtros" aria-label="Filtros" onsubmit="return false">
+      <label>Município
+        <select id="sel-municipio"></select>
+      </label>
+      <label>Ano
+        <select id="sel-ano"></select>
+      </label>
+      <label>Relatório
+        <select id="sel-relatorio"></select>
+      </label>
+    </form>
+
+    <details class="como-ler">
+      <summary>Como ler esta página</summary>
+      <ul>
+        <li><strong>RDQA</strong> (Relatório Detalhado do Quadrimestre Anterior): um por quadrimestre. O 1º cobre janeiro a abril, o 2º maio a agosto e o 3º setembro a dezembro. Os valores de cada RDQA valem só para o seu quadrimestre.</li>
+        <li><strong>RAG</strong> (Relatório Anual de Gestão): cobre o ano inteiro.</li>
+        <li><strong>Alcance</strong>: valor informado pelo município para cada meta e indicador, em porcentagem. 100% significa plano cumprido; o valor pode passar de 100%.</li>
+        <li><strong>Classes</strong>, definidas neste painel sobre o alcance informado: <em>atingida</em> (100% ou mais), <em>parcial</em> (acima de zero e abaixo de 100%, mostrado em três faixas: <em>baixo</em> abaixo de 40%, <em>médio</em> de 40% a menos de 80% e <em>alto</em> de 80% a menos de 100%), <em>zero</em> (igual a zero; não é possível distinguir uma meta não cumprida de um campo não atualizado) e <em>sem valor</em> (campo vazio).</li>
+        <li><strong>Alcance (DigiSUS)</strong>: o alcance de cada indicador é o valor publicado pelo DigiSUS, mostrado como veio, sem recálculo. Em alguns casos ele não bate com executado ÷ plano (por exemplo, 0% com plano e executado preenchidos); o painel não corrige.</li>
+        <li><strong>Mediana</strong> (na tabela dos cartões): o valor do meio entre os alcances das metas que têm valor, sem contar os campos vazios. Não é puxada por poucos valores muito altos, mas como os valores costumam se concentrar em 0 e em 100, ela tende a saltar entre os dois.</li>
+        <li>Os valores aparecem como foram informados pelos municípios, sem correção. O painel não ordena municípios.</li>
+      </ul>
+    </details>
+
+    <div id="area" class="area">
+      <section aria-labelledby="t-estado" id="estado">
+        <div class="titulo-secao">
+          <h2 id="t-estado">Pernambuco</h2>
+          <button type="button" id="ver-detalhes" class="botao-link" hidden></button>
+        </div>
+        <div id="kpis" class="kpis"></div>
+        <div class="grade-estado">
+          <div class="bloco" id="estado-status"></div>
+          <div class="bloco" id="estado-classes"></div>
+          <div class="bloco bloco-mapa" id="estado-tabela"></div>
+          <div class="bloco bloco-mapa" id="estado-mapa"></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="t-municipio" id="municipio" hidden>
+        <div class="titulo-secao">
+          <h2 id="t-municipio">Município</h2>
+          <button type="button" id="ver-todos" class="botao-link">Ver todos os municípios</button>
+        </div>
+        <p class="legenda-secao">Os quatro relatórios do ano. O número grande é a parte dos indicadores que atingiu o plano (100% ou mais); a barra mostra como todos os indicadores se dividem entre as classes.</p>
+        <div id="cartoes" class="cartoes"></div>
+        <div id="cartoes-legenda"></div>
+      </section>
+
+      <section aria-labelledby="t-arvore" class="bloco" id="sec-arvore" hidden>
+        <h2 id="t-arvore">Diretrizes, objetivos e metas</h2>
+        <p class="legenda-secao">Classes de alcance dos indicadores no <strong id="t-arvore-rel"></strong> (muda no filtro de relatório). Escolha o nível para listar todas as diretrizes, todos os objetivos ou todas as metas; abra um item para ver o que há dentro (os objetivos de uma diretriz, ou as metas e os indicadores de um objetivo).</p>
+        <div id="arvore"></div>
+      </section>
+
+      <section aria-labelledby="t-anos" class="bloco" id="sec-anos">
+        <h2 id="t-anos">RAG ao longo dos anos</h2>
+        <p class="legenda-secao" id="anos-legenda"></p>
+        <div id="anos" class="anos"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="rodape">
+    <div class="miolo" id="rodape-texto"></div>
+  </footer>
+
+  <div id="dica" class="dica" role="tooltip" hidden></div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -9,3 +9,5 @@ plano_negativo,valor,Valor planejado negativo,"O valor planejado informado para 
 plano_extremo,valor,Valor planejado muito alto,"O valor planejado informado para a meta, em unidade de quantidade, é muito alto."
 percentual_fora_faixa,valor,Percentual fora da faixa de 0 a 100,"A meta está em unidade percentual ou proporção e o valor planejado está fora de 0 a 100."
 alcancado_sem_plano,informativa,Alcance informado com planejamento zero,"Há valor alcançado para uma meta cujo valor planejado é zero."
+indicador_repetido_na_meta,estrutura,Indicador repetido dentro da meta,"O mesmo texto de indicador aparece mais de uma vez na mesma meta do relatório."
+alcancado_negativo,valor,Valor alcançado negativo,"O valor alcançado informado para a meta é negativo."

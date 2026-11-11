@@ -63,6 +63,12 @@ SELECT
     , max(CASE WHEN projeto_tipo = '3º RDQA' THEN situacao_preenchimento END) AS situacao_3q
     , max(CASE WHEN projeto_tipo = 'RAG' THEN situacao_preenchimento END) AS situacao_rag
 
+    -- Classe do alcance por relatório (atingida, parcial, zero ou sem_valor)
+    , max(CASE WHEN projeto_tipo = '1º RDQA' THEN classe_alcance END) AS classe_1q
+    , max(CASE WHEN projeto_tipo = '2º RDQA' THEN classe_alcance END) AS classe_2q
+    , max(CASE WHEN projeto_tipo = '3º RDQA' THEN classe_alcance END) AS classe_3q
+    , max(CASE WHEN projeto_tipo = 'RAG' THEN classe_alcance END) AS classe_rag
+
     -- Diferença de vl_alcancado entre os relatórios (ignora nulos)
     , min(vl_alcancado) AS vl_alcancado_min
     , max(vl_alcancado) AS vl_alcancado_max
@@ -74,7 +80,8 @@ SELECT
     , count(DISTINCT CASE WHEN tem_flag_valor_extremo THEN projeto_tipo END) = 1 AS flag_extrema_pontual
     , count(DISTINCT CASE WHEN tem_flag_valor_extremo THEN projeto_tipo END) >= 2 AS flag_extrema_recorrente
 
-    -- Guarda: mais de uma linha da mesma meta + indicador no mesmo relatório (hoje não ocorre)
+    -- Aviso: mais de uma linha da mesma meta + indicador no mesmo relatório (o texto do indicador se repete
+    -- na meta); a ocorrência é registrada em int_inconsistencias e as linhas repetidas se juntam em uma aqui
     , count(*) > count(DISTINCT projeto_tipo) AS flag_chave_repetida
 FROM metas
 GROUP BY id_indicador_base, municipio, nu_ano_exercicio, meta_ordenacao, ds_indicador

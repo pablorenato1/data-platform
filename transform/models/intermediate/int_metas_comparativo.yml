@@ -39,9 +39,11 @@ models:
       - name: flag_extrema_recorrente
         description: "Flag extrema em dois ou mais relatórios."
       - name: flag_chave_repetida
-        description: "Guarda: mais de uma linha da mesma meta + indicador no mesmo relatório. Hoje não ocorre; o teste falha se passar a ocorrer."
+        description: "Aviso: mais de uma linha da mesma meta + indicador no mesmo relatório, ou seja, o texto do indicador se repete dentro da meta (acontece em dados reais, por exemplo Vitória de Santo Antão em 2021). Os dados não são alterados: as linhas repetidas se juntam em uma neste modelo e a ocorrência é registrada em int_inconsistencias (indicador_repetido_na_meta). O teste avisa, mas não bloqueia."
         tests:
           - accepted_values:
               arguments:
                 values: [false]
                 quote: false
+              config:
+                severity: warn

@@ -2,7 +2,7 @@
 -- Níveis para filtrar: relatorio (ordenacao = 'todas'), diretriz, objetivo e meta. Em todos eles
 -- a contagem e a porcentagem são de indicadores (uma linha de int_metas_unidades = uma meta + um indicador).
 -- Faixas: 0 = sem valor (nulo); 1 = menos de 10%; 2 a 10 = de 10% a menos de 20% até de 90% a menos de 100%;
--- 11 = 100% ou mais. Zero entra na faixa 1 (taxa_zero, em mart_completude_niveis, mostra só o zero).
+-- 11 = 100% ou mais. Zero e valores negativos (abaixo de 10, sem alterar o valor) entram na faixa 1 (taxa_zero, em mart_completude_niveis, mostra só o zero).
 -- Só aparecem as faixas que têm indicadores; o total do nível está em qtd_indicadores_nivel.
 -- Os valores não são alterados.
 WITH indicadores AS (
@@ -20,7 +20,7 @@ WITH indicadores AS (
         , CASE
             WHEN vl_alcancado IS NULL THEN 0
             WHEN vl_alcancado >= 100 THEN 11
-            ELSE CAST(floor(vl_alcancado / 10) AS INT) + 1
+            ELSE greatest(1, CAST(floor(vl_alcancado / 10) AS INT) + 1)
           END AS faixa_ordem
     FROM {{ ref('int_metas_unidades') }}
     WHERE CAST(nu_ano_exercicio AS INT) >= {{ var('ano_inicial') }}

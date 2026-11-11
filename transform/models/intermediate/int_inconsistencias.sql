@@ -161,6 +161,37 @@ WITH base AS (
     GROUP BY codigo, municipio, nu_ano_exercicio, meta_ordenacao
 )
 
+-- F. Indicador com o texto repetido dentro da mesma meta (e relatório). Os dados não são alterados.
+, indicador_repetido AS (
+    SELECT
+        'indicador_repetido_na_meta' AS codigo
+        , 'indicador' AS escopo
+        , municipio, nu_ano_exercicio, meta_ordenacao, ds_indicador
+        , array_join(array_sort(collect_set(projeto_tipo)), ', ') AS relatorios_afetados
+        , concat('Ocorrências por relatório: ', array_join(sort_array(collect_list(concat(projeto_tipo, '=', n))), ' | ')) AS detalhe
+    FROM (
+        SELECT municipio, nu_ano_exercicio, meta_ordenacao, ds_indicador, projeto_tipo, count(*) AS n
+        FROM base
+        GROUP BY municipio, nu_ano_exercicio, meta_ordenacao, ds_indicador, projeto_tipo
+        HAVING count(*) > 1
+    )
+    GROUP BY municipio, nu_ano_exercicio, meta_ordenacao, ds_indicador
+)
+
+-- G. Valor alcançado negativo
+, alcancado_negativo AS (
+    SELECT
+        'alcancado_negativo' AS codigo
+        , 'meta' AS escopo
+        , municipio, nu_ano_exercicio, meta_ordenacao
+        , CAST(NULL AS STRING) AS ds_indicador
+        , array_join(array_sort(collect_set(projeto_tipo)), ', ') AS relatorios_afetados
+        , concat('Alcançado: ', array_join(sort_array(collect_list(concat(projeto_tipo, '=', CAST(vl_alcancado AS STRING)))), ' | ')) AS detalhe
+    FROM base
+    WHERE vl_alcancado < 0
+    GROUP BY municipio, nu_ano_exercicio, meta_ordenacao
+)
+
 , todas AS (
     SELECT * FROM meta_ausente
     UNION ALL SELECT * FROM indicador_ausente
@@ -168,6 +199,8 @@ WITH base AS (
     UNION ALL SELECT * FROM texto_diferente
     UNION ALL SELECT * FROM plano_diferente
     UNION ALL SELECT * FROM valores_fora_do_comum
+    UNION ALL SELECT * FROM indicador_repetido
+    UNION ALL SELECT * FROM alcancado_negativo
 )
 
 SELECT

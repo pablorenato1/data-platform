@@ -42,3 +42,10 @@ models:
           - accepted_values:
               arguments:
                 values: ["nulo", "zero", "acima_de_zero"]
+      - name: classe_alcance
+        description: "Classe do alcance: atingida (100% ou mais), parcial (acima de zero e abaixo de 100%), zero (igual a zero; valor negativo também entra aqui) ou sem_valor (nulo)."
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["atingida", "parcial", "zero", "sem_valor"]

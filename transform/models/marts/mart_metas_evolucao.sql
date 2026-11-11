@@ -24,6 +24,7 @@ SELECT
     , c.vl_executado_1q, c.vl_executado_2q, c.vl_executado_3q, c.vl_executado_rag
     , c.vl_alcancado_1q, c.vl_alcancado_2q, c.vl_alcancado_3q, c.vl_alcancado_rag
     , c.situacao_1q, c.situacao_2q, c.situacao_3q, c.situacao_rag
+    , c.classe_1q, c.classe_2q, c.classe_3q, c.classe_rag
     , c.qtd_relatorios_com_flag_extrema
 FROM {{ ref('int_metas_comparativo') }} AS c
 WHERE CAST(c.nu_ano_exercicio AS INT) >= {{ var('ano_inicial') }}
