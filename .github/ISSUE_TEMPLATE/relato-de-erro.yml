@@ -1,0 +1,48 @@
+name: Relato de erro ou dúvida sobre os dados
+description: Algo no painel parece errado, confuso ou diferente do DigiSUS.
+title: "[Relato] "
+labels: ["relato"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por ajudar. Preencha o que souber; só o campo "O que você viu" é obrigatório.
+        Os valores do painel são os informados pelos municípios no DigiSUS, sem correção. Se o dado parece errado na origem, conte aqui mesmo assim: ele fica registrado.
+  - type: input
+    id: municipio
+    attributes:
+      label: Município
+      description: Se o assunto for um município específico.
+      placeholder: "Ex.: Recife"
+  - type: input
+    id: ano
+    attributes:
+      label: Ano
+      placeholder: "Ex.: 2025"
+  - type: dropdown
+    id: relatorio
+    attributes:
+      label: Relatório
+      options:
+        - Não se aplica
+        - 1º RDQA
+        - 2º RDQA
+        - 3º RDQA
+        - RAG
+  - type: input
+    id: pagina
+    attributes:
+      label: Endereço da página
+      description: O endereço do navegador guarda os filtros escolhidos (município, ano, relatório), então ajuda a gente a ver o mesmo que você. Já vem preenchido quando você chega pelo link do site.
+  - type: textarea
+    id: o-que-viu
+    attributes:
+      label: O que você viu
+      description: Descreva o que parece errado ou confuso.
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: O que esperava ver
+      description: Se souber, conte o valor ou o comportamento que esperava.
