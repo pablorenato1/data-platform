@@ -1,7 +1,7 @@
 """Exporta os marts do Databricks para os arquivos JSON que o site estático lê.
 
 Lê só dos marts (leitura, sem alterar nada) e grava em site/data/:
-  municipios.json             lista de municípios, anos e cobertura
+  municipios.json             lista de municípios, anos e cobertura, e as datas da carga e da exportação
   resumo_mesorregiao.json     o mesmo resumo, uma vez por mesorregião
   municipios_resumo.json      por município, ano e relatório: status, classes e faixas (aba Municípios)
   resumo.json                 estado: municípios por status, indicadores por classe e por faixa de alcance, por ano e relatório
@@ -37,6 +37,15 @@ def numero(v):
     if isinstance(v, Decimal):
         return float(v)
     return v
+
+
+def momento_utc(valor):
+    """datetime do Databricks (a sessão está em UTC) para texto ISO com Z; None se vazio."""
+    if valor is None:
+        return None
+    if valor.tzinfo is not None:
+        valor = valor.astimezone(timezone.utc)
+    return valor.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def consultar(cur, consulta: str) -> list[dict]:
@@ -107,6 +116,19 @@ def main() -> int:
         f"FROM {marts}.mart_completude_niveis WHERE nivel IN ('diretriz', 'objetivo') "
         f"GROUP BY nivel, municipio_id, ano, ordenacao",
     )
+    # Quando os dados foram carregados no Databricks (a carga roda logo depois da extração). `_extracted_at`,
+    # o momento da extração em si, só existe se o notebook de carga a gravar; sem ela, fica vazio.
+    carga_em = extraido_em = None
+    try:
+        cur.execute(f"SELECT max(_ingested_at) FROM {CATALOGO}.raw.resultados_metas")
+        carga_em = momento_utc(cur.fetchone()[0])
+    except Exception as erro:  # a data é só informativa; a exportação não deve falhar por causa dela
+        print(f"Aviso: não foi possível ler a data da carga ({type(erro).__name__}).")
+    try:
+        cur.execute(f"SELECT max(_extracted_at) FROM {CATALOGO}.raw.resultados_metas")
+        extraido_em = momento_utc(cur.fetchone()[0])
+    except Exception:
+        pass
     conexao.close()
 
     relatorios = [r for r in relatorios if r["municipio_id"] not in EXCLUIDOS]
@@ -193,7 +215,9 @@ def main() -> int:
 
     gravar(tmp / "municipios_resumo.json", resumo_municipios)
     gravar(tmp / "municipios.json", {
-        "gerado_em": gerado_em,
+        "gerado_em": gerado_em,        # quando o JSON foi gerado (não é a data dos dados)
+        "carga_em": carga_em,          # quando os dados foram carregados no Databricks (UTC)
+        "extraido_em": extraido_em,    # quando foram extraídos do DigiSUS, se a carga registrar
         "anos": sorted(anos_todos),
         "total_municipios": len(municipios),
         "municipios_com_dados": sum(1 for m in municipios if m["tem_dados"]),

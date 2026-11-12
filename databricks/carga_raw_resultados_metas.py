@@ -43,7 +43,10 @@ df_raw = spark.read.format("parquet") \
     .load([f.path for f in validos])
 
 # 4. Adição de metadados de auditoria (extremamente útil para troubleshooting futuro)
+# _extracted_at: quando o arquivo foi gravado no Volume, ou seja, quando a extração terminou para aquele município.
+# O site mostra a maior dessas datas como "última extração".
 df_raw = df_raw.withColumn("_source_file", col("_metadata.file_path")) \
+               .withColumn("_extracted_at", col("_metadata.file_modification_time")) \
                .withColumn("_ingested_at", current_timestamp())
 
 # 5. Escrita na tabela Delta
