@@ -6,9 +6,9 @@
   <meta name="color-scheme" content="light dark">
   <title>Metas de saúde dos municípios de Pernambuco</title>
   <meta name="description" content="Planejamento em saúde dos municípios de Pernambuco: o que foi proposto e o que foi alcançado em cada relatório, a partir dos dados públicos do DigiSUS.">
-  <link rel="icon" href="data:,">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <script>try{document.documentElement.dataset.theme=localStorage.getItem('tema')||'light'}catch(e){document.documentElement.dataset.theme='light'}</script>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=20261112s">
 </head>
 <body>
   <header class="topo">
@@ -18,13 +18,16 @@
         <h1>Metas de saúde dos municípios de Pernambuco</h1>
         <p class="subtitulo">O que cada município planejou e quanto informou ter alcançado, em cada relatório do ano.</p>
       </div>
-      <button id="tema" class="botao-tema" type="button" aria-label="Alternar entre tema claro e escuro">Tema</button>
+      <button id="tema" class="botao-tema" type="button" aria-label="Alternar entre tema claro e escuro" title="Tema claro ou escuro">
+        <svg class="ic-lua" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+        <svg class="ic-sol" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5.3 5.3l1.7 1.7M17 17l1.7 1.7M18.7 5.3L17 7M7 17l-1.7 1.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
     </div>
     <nav class="miolo abas" aria-label="Seções do site">
       <button type="button" class="aba" data-pagina="panorama" aria-current="page">Panorama</button>
       <button type="button" class="aba" data-pagina="municipios">Municípios</button>
-      <button type="button" class="aba" data-pagina="municipio">Detalhe do município</button>
-      <button type="button" class="aba" data-pagina="sobre">Sobre os dados</button>
+      <button type="button" class="aba" data-pagina="municipio" aria-label="Detalhe do município">Detalhe<span class="so-grande"> do município</span></button>
+      <button type="button" class="aba" data-pagina="sobre" aria-label="Sobre os dados">Sobre<span class="so-grande"> os dados</span></button>
     </nav>
     <div class="regua" aria-hidden="true"><i class="seg-atingida"></i><i class="seg-parcial_alto"></i><i class="seg-parcial_medio"></i><i class="seg-parcial_baixo"></i><i class="seg-zero"></i><i class="seg-sem_valor"></i></div>
   </header>
@@ -48,7 +51,7 @@
       <label>Relatório
         <select id="sel-relatorio"></select>
       </label>
-      <button type="button" id="limpar-mun" class="botao-limpar" title="Remove município, mesorregião e situação; mantém ano e relatório" hidden>Limpar filtros</button>
+      <button type="button" id="limpar-mun" class="botao-limpar" title="Remove município, mesorregião e situação; mantém ano e relatório">Limpar filtros</button>
     </form>
 
     <div id="pg-panorama">
@@ -57,7 +60,7 @@
       <ul>
         <li><strong>RDQA</strong> (Relatório Detalhado do Quadrimestre Anterior): um por quadrimestre. O 1º cobre janeiro a abril, o 2º maio a agosto e o 3º setembro a dezembro. Os valores de cada RDQA valem só para o seu quadrimestre.</li>
         <li><strong>RAG</strong> (Relatório Anual de Gestão): cobre o ano inteiro.</li>
-        <li><strong>Alcance</strong>: valor informado pelo município para cada meta e indicador, em porcentagem. 100% significa plano cumprido; o valor pode passar de 100%.</li>
+        <li><strong>Alcance</strong>: valor informado pelo município para cada meta e indicador, em porcentagem. 100% ou mais é o que este painel chama de atingida; o valor pode passar de 100%.</li>
         <li><strong>Classes</strong>, definidas neste painel sobre o alcance informado: <em>atingida</em> (100% ou mais), <em>parcial</em> (acima de zero e abaixo de 100%, mostrado em três faixas: <em>baixo</em> abaixo de 40%, <em>médio</em> de 40% a menos de 80% e <em>alto</em> de 80% a menos de 100%), <em>zero</em> (igual a zero; o gestor confirma todos os campos ao enviar o relatório, mas os dados não dizem o motivo do zero) e <em>sem valor</em> (campo vazio).</li>
         <li><strong>Alcance (DigiSUS)</strong>: o alcance de cada indicador é o valor publicado pelo DigiSUS, mostrado como veio, sem recálculo. Em alguns casos ele não bate com executado ÷ plano (por exemplo, 0% com plano e executado preenchidos); o painel não corrige.</li>
         <li><strong>Mediana</strong> (na tabela dos cartões): o valor do meio entre os alcances das metas que têm valor, sem contar os campos vazios. Não é puxada por poucos valores muito altos, mas como os valores costumam se concentrar em 0 e em 100, ela tende a saltar entre os dois.</li>
@@ -71,6 +74,7 @@
           <h2 id="t-estado">Pernambuco</h2>
           <button type="button" id="ver-detalhes" class="botao-link" hidden></button>
         </div>
+        <p id="faixa-filtro" class="faixa-filtro" role="status" hidden></p>
         <div class="palco">
           <div id="kpis" class="kpis"></div>
           <div class="bloco bloco-mapa" id="estado-mapa"></div>
@@ -84,7 +88,7 @@
       </section>
 
       <section aria-labelledby="t-anos" class="bloco" id="sec-anos">
-        <h2 id="t-anos">RAG ao longo dos anos</h2>
+        <h2 id="t-anos">Relatório ao longo dos anos</h2>
         <p class="legenda-secao" id="anos-legenda"></p>
         <div id="anos" class="anos"></div>
       </section>
@@ -112,19 +116,26 @@
           <h2 id="t-municipio">Município</h2>
           <button type="button" id="ver-todos" class="botao-link">Ver todos os municípios</button>
         </div>
-        <p class="legenda-secao">Os quatro relatórios do ano. O número grande é a parte dos indicadores que atingiu o plano (100% ou mais); a barra mostra como todos os indicadores se dividem entre as classes.</p>
+        <p class="legenda-secao">Os quatro relatórios do ano. O número grande é a parte dos indicadores com alcance de 100% ou mais; a barra mostra como todos os indicadores se dividem entre as classes.</p>
         <div id="cartoes" class="cartoes"></div>
         <div id="cartoes-legenda"></div>
+      </section>
+
+      <section aria-labelledby="t-plano" class="bloco" id="sec-plano">
+        <h2 id="t-plano">Planejamento dos indicadores</h2>
+        <p class="legenda-secao">Quantos indicadores de <strong id="t-plano-mun">o município</strong> têm um valor planejado (plano) e quantos aparecem com plano 0 ou vazio. Plano 0 pode ser intencional, por exemplo em metas de reduzir ou manter em zero; plano vazio é um campo que não foi preenchido. O painel mostra o que foi informado e não julga qual é o caso.</p>
+        <div id="plano"></div>
       </section>
 
       <section aria-labelledby="t-arvore" class="bloco" id="sec-arvore">
         <h2 id="t-arvore">Diretrizes, objetivos e metas</h2>
         <p class="legenda-secao">Classes de alcance dos indicadores no <strong id="t-arvore-rel"></strong> (muda no filtro de relatório). Escolha o nível para listar todas as diretrizes, todos os objetivos ou todas as metas; abra um item para ver o que há dentro (os objetivos de uma diretriz, ou as metas e os indicadores de um objetivo).</p>
+        <p id="fonte-link" class="nota-tabela"></p>
         <div id="arvore"></div>
       </section>
 
         <section aria-labelledby="t-anos-mun" class="bloco" id="sec-anos-mun">
-          <h2 id="t-anos-mun">RAG ao longo dos anos</h2>
+          <h2 id="t-anos-mun">Relatório ao longo dos anos</h2>
           <p class="legenda-secao" id="anos-legenda-mun"></p>
           <div id="anos-mun" class="anos"></div>
         </section>
@@ -143,6 +154,6 @@
   </button>
 
   <div id="dica" class="dica" role="tooltip" hidden></div>
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/app.js?v=20261112s"></script>
 </body>
 </html>

@@ -1,8 +1,8 @@
 // Site estático: lê os JSON gerados por export/exportar_site.py (pasta data/) e desenha a página.
 import {
   $, h, s, numero, porcento, carregar, limitar, rotuloStatus, ligarDica, segmentado,
-  barraClasses, legendaClasses, RELATORIOS, CLASSES, SEM_PROJETO, faixaParcial, detalharClasses,
-} from './util.js';
+  esconderDica, barraClasses, legendaClasses, RELATORIOS, CLASSES, SEM_PROJETO, faixaParcial, detalharClasses,
+} from './util.js?v=20261112s';
 
 const estado = {
   municipios: null, resumo: null, resumoMeso: null, mapa: null, malha: null, mesoDe: new Map(),
@@ -21,10 +21,38 @@ const resumoAtual = () => (estado.meso ? estado.resumoMeso?.[estado.meso] : esta
 const noRegiao = (id) => !estado.meso || estado.mesoDe.get(id) === estado.meso;
 const situacaoDoMun = (id) => estado.munResumo?.[id]?.[String(estado.ano)]?.[tipoDe(estado.rel).tipo]?.s || 'sem_dados';
 const statusOk = (id) => !estado.statusMun || !estado.munResumo || situacaoDoMun(id) === estado.statusMun;
-// Os gráficos seguem só a mesorregião; a situação do relatório filtra as listas de municípios
-const noLugar = (id) => noRegiao(id);
+// Mesorregião e situação do relatório escolhidas nos filtros (números, mapa, distribuição, alcance e regiões)
+const noLugar = (id) => noRegiao(id) && statusOk(id);
 const totalDoLugar = () => estado.municipios.municipios.filter((m) => noLugar(m.id)).length;
 const totalDaRegiao = () => estado.municipios.municipios.filter((m) => noRegiao(m.id)).length;
+
+
+// Soma indicadores por classe, faixas e situações de um conjunto de municípios (a partir de municipios_resumo.json)
+function agregar(ids, ano, tipo) {
+  const status = new Map(); const faixas = new Map();
+  const classes = { atingida: 0, parcial: 0, zero: 0, sem_valor: 0 };
+  for (const id of ids) {
+    const r = estado.munResumo?.[id]?.[ano]?.[tipo];
+    if (!r) continue;
+    status.set(r.s || 'sem_dados', (status.get(r.s || 'sem_dados') || 0) + 1);
+    classes.atingida += r.c[0] || 0; classes.parcial += r.c[1] || 0; classes.zero += r.c[2] || 0; classes.sem_valor += r.c[3] || 0;
+    for (const [o, q] of r.f) faixas.set(o, (faixas.get(o) || 0) + q);
+  }
+  return { status: [...status], classes: detalharClasses(classes, [...faixas]), faixas: [...faixas] };
+}
+
+// Resumo do ano para o painel: o da região, ou o recalculado quando há filtro de situação
+function resumoDoAno(ano) {
+  if (!estado.statusMun || !estado.munResumo) return resumoAtual()?.[ano];
+  const ids = estado.municipios.municipios.filter((m) => noLugar(m.id)).map((m) => m.id);
+  const saida = {};
+  for (const d of RELATORIOS) saida[d.tipo] = agregar(ids, ano, d.tipo);
+  const base = resumoAtual()?.[ano]?.[tipoDe(estado.rel).tipo];
+  if (base) saida[tipoDe(estado.rel).tipo].statusRegiao = base.status; // as barras de situação mostram a região toda
+  return saida;
+}
+
+const FRASE_FILTRO = () => (estado.statusMun ? `Mostra todos os municípios, sem o filtro de situação.` : '');
 
 // Situações que existem no ano e relatório escolhidos (dentro da mesorregião), com a contagem
 function preencherStatus() {
@@ -68,10 +96,16 @@ function barrasStatus(lista, statusMun, nomeMun) {
 
 function renderEstado() {
   const ano = String(estado.ano);
-  const resumo = resumoAtual()?.[ano];
+  const resumo = resumoDoAno(ano);
   const mun = estado.mun;
   const nomeMun = mun ? nomeDe(mun) : null;
   $('t-estado').textContent = mun ? `${lugar()} em ${ano}, com destaque para ${nomeMun}` : `${lugar()} em ${ano}`;
+  const faixa = $('faixa-filtro');
+  if (estado.statusMun) {
+    const n = totalDoLugar();
+    faixa.textContent = `Filtro ativo: ${tipoDe(estado.rel).tipo} de ${ano}, situação “${rotuloStatus(estado.statusMun)}” (${numero(n, 0)} ${n === 1 ? 'município' : 'municípios'}${estado.meso ? ` em ${rotuloMeso(estado.meso)}` : ''}). Os números, o mapa, a distribuição, o alcance dos indicadores e as mesorregiões mostram só esses municípios.`;
+    faixa.hidden = false;
+  } else faixa.hidden = true;
   const verDetalhes = $('ver-detalhes');
   verDetalhes.hidden = !mun;
   if (mun) verDetalhes.textContent = `Abrir a página de ${nomeMun}`;
@@ -95,26 +129,26 @@ function renderEstado() {
   const pctPE = totalInd ? ((classes.atingida || 0) / totalInd) * 100 : null;
   if (mun) {
     const statusMun = relMun && relMun.tem_dados && relMun.status ? relMun.status : 'sem_dados';
-    const mesmos = (dados.status.find(([st]) => st === statusMun) ?? [, 0])[1];
+    const mesmos = ((dados.statusRegiao ?? dados.status).find(([st]) => st === statusMun) ?? [, 0])[1];
     const indMun = relMun?.qtd_indicadores ?? 0;
     const pctMun = indMun ? ((relMun.classes.atingida || 0) / indMun) * 100 : null;
     $('kpis').replaceChildren(
       kpi(`Situação do ${def.tipo} em ${nomeMun}`, rotuloStatus(statusMun), `${numero(mesmos, 0)} de ${numero(totalDaRegiao(), 0)} municípios na mesma situação`, true),
       kpi(`Indicadores em ${nomeMun}`, numero(indMun, 0), `${lugar()}: ${numero(totalInd, 0)}`),
-      kpi('Indicadores atingidos', pctMun == null ? '–' : porcento(pctMun, 0), `${lugar()}: ${pctPE == null ? '–' : porcento(pctPE, 0)}`));
+      kpi('Indicadores atingidos', pctMun == null ? '–' : porcento(pctMun, 0), `${indMun ? `${numero(relMun.classes.atingida || 0, 0)} de ${numero(indMun, 0)} indicadores. ` : ''}${lugar()}: ${pctPE == null ? '–' : porcento(pctPE, 0)}`));
   } else {
     $('kpis').replaceChildren(
-      kpi('Municípios na extração', `${numero(totalMun - semDados, 0)} de ${numero(totalMun, 0)}`, `${def.tipo}, ${ano}`),
+      kpi(estado.statusMun || estado.meso ? 'Municípios no filtro' : 'Municípios na extração', `${numero(totalMun - semDados, 0)} de ${numero(estado.municipios.total_municipios, 0)}`, [`${def.tipo}, ${ano}`, estado.meso ? rotuloMeso(estado.meso) : null, estado.statusMun ? rotuloStatus(estado.statusMun) : null].filter(Boolean).join(', ')),
       kpi('Indicadores', numero(totalInd, 0), `somando os municípios, ${def.tipo}`),
       kpi('Indicadores atingidos', pctPE == null ? '–' : porcento(pctPE, 0), 'alcance de 100% ou mais'));
   }
 
   // situação dos relatórios dos municípios
-  const ordenado = [...dados.status].sort((a, b) => ORDEM_STATUS.indexOf(a[0]) - ORDEM_STATUS.indexOf(b[0]));
+  const ordenado = [...(dados.statusRegiao ?? dados.status)].sort((a, b) => ORDEM_STATUS.indexOf(a[0]) - ORDEM_STATUS.indexOf(b[0]));
   $('estado-status').replaceChildren(
     h('h3', { text: `Situação do ${def.tipo} nos municípios` }),
-    h('p', { class: 'sub', text: mun ? `Quantos municípios estão em cada situação. A situação de ${nomeMun} está marcada.` : 'Quantos municípios estão em cada situação, como informada no DigiSUS.' }),
-    barrasStatus(ordenado, mun ? (relMun && relMun.tem_dados && relMun.status ? relMun.status : 'sem_dados') : null, nomeMun));
+    h('p', { class: 'sub', text: mun ? `Quantos municípios estão em cada situação. A situação de ${nomeMun} está marcada.` : (estado.statusMun ? 'Quantos municípios estão em cada situação, como informada no DigiSUS. A situação escolhida no filtro está marcada; esta barra mostra todos para dar a proporção.' : 'Quantos municípios estão em cada situação, como informada no DigiSUS.') }),
+    barrasStatus(ordenado, mun ? (relMun && relMun.tem_dados && relMun.status ? relMun.status : 'sem_dados') : (estado.statusMun || null), mun ? nomeMun : 'filtro ativo'));
 
   // classes de alcance por relatório (os quatro, em percentual)
   // mostra só o que está selecionado: o município escolhido ou, sem escolha, Pernambuco inteiro
@@ -159,21 +193,77 @@ const FAIXAS_MAPA = [
 ];
 const faixaMapa = (pct) => FAIXAS_MAPA.findIndex((f) => pct < f.ate);
 
+// Aproximar e afastar o mapa (botões + e −; com zoom, arrastar move o mapa). O zoom é guardado em estado.zoom
+// e sobrevive a um novo desenho do mapa (por exemplo, ao escolher um município).
+function caixaComZoom(svg, malha) {
+  const z = estado.zoom ?? (estado.zoom = { k: 1, cx: malha.largura / 2, cy: malha.altura / 2 });
+  const botoes = {};
+  const aplicar = () => {
+    // com zoom a área visível fica mais alta (4:3), senão o mapa viraria uma faixa fina
+    const w = malha.largura / z.k, alt = z.k > 1 ? (w * 3) / 4 : malha.altura;
+    z.cx = Math.min(Math.max(z.cx, w / 2), malha.largura - w / 2);
+    z.cy = alt >= malha.altura ? malha.altura / 2 : Math.min(Math.max(z.cy, alt / 2), malha.altura - alt / 2);
+    svg.setAttribute('viewBox', `${z.cx - w / 2} ${z.cy - alt / 2} ${w} ${alt}`);
+    svg.classList.toggle('ampliado', z.k > 1);
+    botoes.mais.disabled = z.k >= 8;
+    botoes.menos.disabled = z.k <= 1;
+    botoes.deslizante.value = String(z.k);
+  };
+  const mudar = (fator) => definir(z.k * fator);
+  const definir = (novo) => {
+    if (z.k === 1 && novo > 1) {
+      const sel = svg.querySelector('.selecionado'); // a primeira aproximação centra no município escolhido
+      if (sel) { const b = sel.getBBox(); z.cx = b.x + b.width / 2; z.cy = b.y + b.height / 2; }
+    }
+    z.k = Math.min(8, Math.max(1, novo));
+    if (z.k === 1) { z.cx = malha.largura / 2; z.cy = malha.altura / 2; }
+    aplicar();
+  };
+  const botao = (chave, texto, rotulo, aoClicar) => {
+    const b = h('button', { type: 'button', 'aria-label': rotulo, title: rotulo, text: texto });
+    b.addEventListener('click', aoClicar);
+    botoes[chave] = b;
+    return b;
+  };
+  const deslizante = h('input', { type: 'range', min: '1', max: '8', step: '0.05', value: String(z.k), 'aria-label': 'Aproximação do mapa' });
+  deslizante.addEventListener('input', () => definir(Number(deslizante.value)));
+  const controles = h('div', { class: 'zoom-mapa' },
+    botao('menos', '−', 'Afastar o mapa', () => mudar(1 / 1.5)),
+    deslizante,
+    botao('mais', '+', 'Aproximar o mapa', () => mudar(1.5)));
+  botoes.deslizante = deslizante;
+
+  let arraste = null, moveu = false;
+  svg.addEventListener('pointerdown', (e) => {
+    if (z.k === 1) return;
+    arraste = { x: e.clientX, y: e.clientY, cx: z.cx, cy: z.cy }; moveu = false;
+  });
+  svg.addEventListener('pointermove', (e) => {
+    if (!arraste) return;
+    const dx = e.clientX - arraste.x, dy = e.clientY - arraste.y;
+    if (!moveu && Math.abs(dx) + Math.abs(dy) < 6) return;
+    moveu = true; esconderDica();
+    const escala = (malha.largura / z.k) / svg.getBoundingClientRect().width;
+    z.cx = arraste.cx - dx * escala; z.cy = arraste.cy - dy * escala;
+    aplicar();
+  });
+  for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) svg.addEventListener(ev, () => { arraste = null; });
+  // depois de arrastar, o toque final não deve escolher o município que está embaixo
+  svg.addEventListener('click', (e) => { if (moveu) { e.stopPropagation(); moveu = false; } }, true);
+
+  aplicar();
+  return h('div', { class: 'mapa-caixa' }, controles, svg);
+}
+
 function renderMapa() {
   const alvo = $('estado-mapa');
   const def = tipoDe(estado.rel);
   const dados = estado.mapa?.[String(estado.ano)]?.[def.tipo] ?? {};
   const malha = estado.malha;
-  const dadoMun = estado.mun ? dados[estado.mun] : null;
   const titulo = [
     h('h3', { text: `Indicadores atingidos por município, ${def.tipo}` }),
     h('p', { class: 'sub', text: 'Participação dos indicadores com alcance de 100% ou mais. Sem ordenação entre municípios.' }),
   ];
-  if (estado.mun) {
-    titulo.push(h('p', { class: 'destaque-mapa', text: dadoMun
-      ? `${nomeDe(estado.mun)}: ${porcento((dadoMun[0] / dadoMun[1]) * 100, 0)} dos indicadores atingidos (${numero(dadoMun[0], 0)} de ${numero(dadoMun[1], 0)}), no círculo do mapa.`
-      : `${nomeDe(estado.mun)}: sem indicadores neste relatório.` }));
-  }
   if (!malha) {
     alvo.replaceChildren(...titulo, h('p', { class: 'painel-vazio', text: 'Mapa indisponível.' }));
     return;
@@ -193,14 +283,21 @@ function renderMapa() {
     // do maior para o menor, como a legenda das classes
     ...FAIXAS_MAPA.map((f, i) => ({ f, i })).reverse().map(({ f, i }) => h('li', {}, h('span', { class: `chave mapa-${i}` }), h('span', { text: f.rotulo }))),
     h('li', {}, h('span', { class: 'chave mapa-sem' }), h('span', { text: 'sem indicadores' })),
-    estado.meso ? h('li', {}, h('span', { class: 'chave fora' }), h('span', { text: `fora de ${lugar()}` })) : null,
+    (estado.meso || estado.statusMun) ? h('li', {}, h('span', { class: 'chave fora' }), h('span', { text: estado.statusMun ? 'fora do filtro' : `fora de ${lugar()}` })) : null,
   ]);
   const notaLegenda = h('p', { class: 'nota-tabela', text: 'Em cada faixa, o limite menor está incluído e o maior não (a primeira vai até 100%).' });
   const linhas = Object.keys(dados).filter(noLugar)
     .sort((a, b) => nomeDe(a).localeCompare(nomeDe(b), 'pt-BR'))
     .map((id) => h('tr', {}, h('td', { text: nomeDe(id) }), h('td', { class: 'num', text: numero(dados[id][0], 0) }),
       h('td', { class: 'num', text: numero(dados[id][1], 0) }), h('td', { class: 'num', text: porcento((dados[id][0] / dados[id][1]) * 100, 0) })));
-  alvo.replaceChildren(...titulo, svg, legenda, notaLegenda,
+  // qual município está escolhido, por escrito (a altura é reservada, então nada se mexe ao escolher)
+  const dadoMun = estado.mun ? dados[estado.mun] : null;
+  const selecao = h('p', { class: 'mapa-selecao', role: 'status', text: !estado.mun
+    ? 'Clique ou toque em um município para ver o nome e o resultado dele.'
+    : dadoMun ? `${nomeDe(estado.mun)}: ${porcento((dadoMun[0] / dadoMun[1]) * 100, 0)} atingidos (${numero(dadoMun[0], 0)} de ${numero(dadoMun[1], 0)} indicadores)`
+      : `${nomeDe(estado.mun)}: sem indicadores neste relatório` });
+  if (estado.mun) selecao.classList.add('ativa');
+  alvo.replaceChildren(...titulo, caixaComZoom(svg, malha), selecao, legenda, notaLegenda,
     h('details', { class: 'tabela-alt' }, h('summary', { text: 'Ver como tabela (ordem alfabética)' }),
       h('div', { class: 'rolagem tabela-alta' }, h('table', {},
         h('thead', {}, h('tr', {}, h('th', { text: 'Município' }), h('th', { class: 'num', text: 'Atingidos' }), h('th', { class: 'num', text: 'Indicadores' }), h('th', { class: 'num', text: '%' }))),
@@ -248,6 +345,23 @@ function renderDistribuicao() {
 }
 
 // ---------- o mapa ao longo dos anos ----------
+// Caixa (viewBox) que enquadra um município, com a mesma proporção do mapa inteiro, para os mini-mapas dos anos.
+const enquadramentos = new Map();
+function enquadrar(id, malha) {
+  if (enquadramentos.has(id)) return enquadramentos.get(id);
+  const teste = s('svg', { viewBox: `0 0 ${malha.largura} ${malha.altura}`, style: 'position:absolute;visibility:hidden;width:0;height:0', 'aria-hidden': 'true' });
+  teste.append(s('path', { d: malha.municipios[id] }));
+  document.body.append(teste);
+  const b = teste.firstChild.getBBox();
+  teste.remove();
+  const proporcao = malha.largura / malha.altura;
+  let w = b.width * 1.2, alt = b.height * 1.2;
+  if (w / alt < proporcao) w = alt * proporcao; else alt = w / proporcao;
+  const caixa = `${b.x + b.width / 2 - w / 2} ${b.y + b.height / 2 - alt / 2} ${w} ${alt}`;
+  enquadramentos.set(id, caixa);
+  return caixa;
+}
+
 function renderEvolucaoMapa() {
   const alvo = $('estado-evolucao');
   const def = tipoDe(estado.rel);
@@ -257,12 +371,14 @@ function renderEvolucaoMapa() {
   const itens = [];
   for (const ano of anos) {
     const dados = estado.mapa?.[String(ano)]?.[def.tipo] ?? {};
-    const ids = Object.keys(dados).filter(noRegiao);
+    // com um município escolhido, cada mini-mapa mostra só ele
+    const ids = estado.mun ? (dados[estado.mun] ? [estado.mun] : []) : Object.keys(dados).filter(noRegiao);
     if (!ids.length) continue;
     const at = ids.reduce((a, id) => a + dados[id][0], 0);
     const tot = ids.reduce((a, id) => a + dados[id][1], 0);
-    const svg = s('svg', { class: 'mini-mapa-svg', viewBox: `0 0 ${malha.largura} ${malha.altura}`, 'aria-hidden': 'true', focusable: 'false' });
+    const svg = s('svg', { class: 'mini-mapa-svg', viewBox: estado.mun ? enquadrar(estado.mun, malha) : `0 0 ${malha.largura} ${malha.altura}`, 'aria-hidden': 'true', focusable: 'false' });
     for (const [id, d] of Object.entries(malha.municipios)) {
+      if (estado.mun && id !== estado.mun) continue;
       const dado = dados[id];
       const pct = dado && dado[1] ? (dado[0] / dado[1]) * 100 : null;
       svg.append(s('path', { d, class: `${pct == null ? 'mapa-sem' : `mapa-${faixaMapa(pct)}`}${noRegiao(id) ? '' : ' fora'}` }));
@@ -277,8 +393,8 @@ function renderEvolucaoMapa() {
     itens.push(botao);
   }
   alvo.replaceChildren(
-    h('h3', { text: `O mapa ao longo dos anos, ${def.tipo}` }),
-    h('p', { class: 'sub', text: 'As cores são as do mapa principal. Escolha um ano para ver os números dele.' }),
+    h('h3', { text: `${estado.mun ? `${nomeDe(estado.mun)} ao longo dos anos` : 'O mapa ao longo dos anos'}, ${def.tipo}` }),
+    h('p', { class: 'sub', text: `As cores são as do mapa principal${estado.mun ? ` (aqui, só ${nomeDe(estado.mun)})` : ''}. Escolha um ano para ver os números dele.` + (estado.statusMun ? ` ${FRASE_FILTRO()}` : '') }),
     h('div', { class: 'mini-mapas' }, itens));
 }
 
@@ -289,12 +405,15 @@ function renderMeso() {
   const def = tipoDe(estado.rel);
   const ano = String(estado.ano);
   const linhas = MESORREGIOES.filter((m) => estado.resumoMeso?.[m]).map((m) => {
-    const dados = estado.resumoMeso[m]?.[ano]?.[def.tipo];
+    const ids = estado.statusMun ? estado.municipios.municipios.filter((x) => x.mesorregiao === m && statusOk(x.id)).map((x) => x.id) : null;
+    const dados = ids ? agregar(ids, ano, def.tipo) : estado.resumoMeso[m]?.[ano]?.[def.tipo];
     const classes = dados?.classes ?? {};
     const total = CLASSES.reduce((a, c) => a + (classes[c.chave] || 0), 0);
-    const qtd = estado.municipios.municipios.filter((x) => x.mesorregiao === m).length;
-    const botao = h('button', { type: 'button', class: `linha-meso${m === estado.meso ? ' atual' : ''}`, 'aria-pressed': String(m === estado.meso) },
-      h('span', { class: 'meso-nome' }, h('strong', { text: rotuloMeso(m) }), h('span', { text: `${numero(qtd, 0)} municípios` })),
+    const qtd = ids ? ids.length : estado.municipios.municipios.filter((x) => x.mesorregiao === m).length;
+    const doMunicipio = Boolean(estado.mun) && estado.mesoDe.get(estado.mun) === m;
+    const botao = h('button', { type: 'button', class: `linha-meso${m === estado.meso ? ' atual' : ''}${doMunicipio ? ' do-municipio' : ''}`, 'aria-pressed': String(m === estado.meso) },
+      h('span', { class: 'meso-nome' }, h('strong', { text: rotuloMeso(m) }), h('span', { text: `${numero(qtd, 0)} municípios` }),
+        doMunicipio ? h('span', { class: 'marca-mun', text: `● ${limitar(nomeDe(estado.mun), 26)}` }) : null),
       total ? barraClasses(classes, 'percentual', 1) : h('span', { class: 'barra-vazia', text: 'sem indicadores' }),
       h('span', { class: 'meso-valor', text: total ? porcento((classes.atingida / total) * 100, 0) : '–' }));
     botao.addEventListener('click', (e) => { if (e.target.closest('.segmento')) return; selecionarMeso(m === estado.meso ? '' : m); });
@@ -302,7 +421,7 @@ function renderMeso() {
   });
   alvo.replaceChildren(
     h('h3', { text: `Alcance dos indicadores por mesorregião, ${def.tipo}` }),
-    h('p', { class: 'sub', text: 'As cinco mesorregiões do IBGE, de leste a oeste. O número à direita é a parte dos indicadores que atingiu o plano. Clique em uma para ver só os municípios dela; clique de novo para voltar a Pernambuco.' }),
+    h('p', { class: 'sub', text: 'As cinco mesorregiões do IBGE, de leste a oeste. O número à direita é a parte dos indicadores com alcance de 100% ou mais. Clique em uma para ver só os municípios dela; clique de novo para voltar a Pernambuco.' + (estado.mun ? ` A região de ${nomeDe(estado.mun)} está marcada.` : '') }),
     h('div', { class: 'linhas-meso' }, linhas), legendaClasses());
 }
 
@@ -337,7 +456,7 @@ function renderCartoes(porTipo) {
     const pctAtingidos = total ? (rel.classes.atingida / total) * 100 : 0;
     cartao.append(
       h('div', { class: 'numero-grande', text: porcento(pctAtingidos, 0) }),
-      h('div', { class: 'numero-legenda', text: 'dos indicadores atingiram o plano' }),
+      h('div', { class: 'numero-legenda', text: 'dos indicadores' }),
       barraClasses(rel.classes, 'percentual', 1),
       h('div', { class: 'detalhe', text: `${numero(rel.classes.atingida, 0)} de ${numero(total, 0)} indicadores com alcance de 100% ou mais` }));
     return cartao;
@@ -359,9 +478,10 @@ function renderCartoes(porTipo) {
     h('details', { class: 'tabela-alt' }, h('summary', { text: 'Ver como tabela' }),
       h('div', { class: 'rolagem' }, h('table', {},
         h('thead', {}, h('tr', {}, h('th', { text: 'Relatório' }), h('th', { text: 'Status' }), h('th', { class: 'num', text: 'Indicadores' }),
-          ...CLASSES.map((c) => h('th', { class: 'num', text: c.rotulo })), h('th', { class: 'num', text: 'Mediana do alcance' }))),
+          ...CLASSES.map((c) => h('th', { class: 'num', title: `${c.rotulo}: ${c.regra}` },
+            c.rotulo, h('span', { class: 'faixa-coluna', text: c.regra }))), h('th', { class: 'num', text: 'Mediana do alcance' }))),
         h('tbody', {}, linhas))),
-      h('p', { class: 'nota-tabela', text: 'A mediana considera só os indicadores com valor (ignora os campos vazios). Como os valores costumam se concentrar em 0 e em 100, ela tende a saltar entre os dois e não substitui a divisão por classes.' })));
+      h('p', { class: 'nota-tabela', text: 'Parcial é dividido em três faixas, só para exibição: baixo (acima de 0 e abaixo de 40%), médio (40% a menos de 80%) e alto (80% a menos de 100%). Um município só tem parcial quando algum indicador informa um valor entre 0 e 100; quando os valores são sempre 0 ou 100 ou campo vazio, como em Ribeirão, essas três colunas ficam em 0. A mediana considera só os indicadores com valor (ignora os campos vazios). Como os valores costumam se concentrar em 0 e em 100, ela tende a saltar entre os dois e não substitui a divisão por classes.' })));
 }
 
 // ---------- município: diretrizes, objetivos e metas ----------
@@ -384,6 +504,9 @@ function formatarValor(v, tipoValor) {
   return tipoValor === 'percentual' ? porcento(v, 2) : numero(v, 2);
 }
 
+// Unidade que o município marcou na meta (o painel usa a mesma para decidir se escreve "%")
+const ROTULO_UNIDADE = { percentual: 'Percentual', quantidade: 'Número', proporcao: 'Proporção', razao: 'Razão', monetario: 'Moeda', taxa: 'Taxa', indice: 'Índice', decimal: 'Decimal' };
+
 function tabelaMetas(metas, chave) {
   const linhas = [];
   for (const meta of metas) {
@@ -393,30 +516,65 @@ function tabelaMetas(metas, chave) {
       const classe = presente ? CLASSES.find((c) => c.chave === classeDetalhada(r)) : null;
       linhas.push(h('tr', {},
         h('td', { class: 'col-meta', text: i === 0 ? `${meta.ordem} · ${meta.descricao ?? ''}` : '' }),
-        h('td', { text: ind.nome ?? '' }),
-        h('td', { class: 'num', text: presente ? formatarValor(r.plano, meta.tipo_valor) : '–' }),
-        h('td', { class: 'num', text: presente ? formatarValor(r.executado, meta.tipo_valor) : '–' }),
-        h('td', { class: 'num', text: presente && r.alcancado != null ? porcento(r.alcancado, 2) : '–' }),
-        h('td', {}, classe
+        h('td', { class: 'col-ind', 'data-rotulo': 'Indicador', text: ind.nome ?? '' }),
+        h('td', { class: 'col-unidade', 'data-rotulo': 'Unidade', text: ROTULO_UNIDADE[meta.tipo_valor] ?? '–' }),
+        h('td', { class: 'num', 'data-rotulo': 'Plano', text: presente ? formatarValor(r.plano, meta.tipo_valor) : '–' }),
+        h('td', { class: 'num', 'data-rotulo': 'Executado', text: presente ? formatarValor(r.executado, meta.tipo_valor) : '–' }),
+        h('td', { class: 'num', 'data-rotulo': 'Alcance', text: presente && r.alcancado != null ? porcento(r.alcancado, 2) : '–' }),
+        h('td', { class: 'col-classe' }, classe
           ? h('span', { class: 'etiqueta-classe' }, h('span', { class: `chave seg-${classe.chave}` }), classe.rotulo)
-          : h('span', { class: 'etiqueta-classe', text: 'Meta não consta' }))));
+          : h('span', { class: 'etiqueta-classe', text: 'Indicador não consta neste relatório' }))));
     });
   }
   return h('div', { class: 'rolagem' }, h('table', { class: 'tabela-metas' },
     h('thead', {}, h('tr', {}, h('th', { text: 'Meta' }), h('th', { text: 'Indicador' }),
+      h('th', { title: 'Unidade que o município marcou na meta', text: 'Unidade' }),
       h('th', { class: 'num', text: 'Plano' }), h('th', { class: 'num', text: 'Executado' }),
       h('th', { class: 'num', title: 'Valor informado pelo DigiSUS, sem recálculo', text: 'Alcance (DigiSUS)' }), h('th', { text: 'Classe' }))),
     h('tbody', {}, linhas)));
 }
 
+const CODIGO_PROJETO = { '1q': 10, '2q': 11, '3q': 12, rag: 13 };
+
+// Endereço da API do DigiSUS com os dados originais do município, ano e relatório escolhidos
+function enderecoFonte() {
+  const q = new URLSearchParams({ co_esfera: '1', sg_uf: 'PE', co_municipio_ibge: estado.mun, nu_ano_exercicio: String(estado.ano), co_projeto_tipo: String(CODIGO_PROJETO[estado.rel]) });
+  return `https://digisusgmp.saude.gov.br/v1.5/api/relatorio/resultados-metas?${q}`;
+}
+
 function renderArvore() {
   const alvo = $('arvore');
-  const dados = estado.metasDados;
+  const todos = estado.metasDados;
   const def = tipoDe(estado.rel);
   const chave = def.chave;
   $('t-arvore-rel').textContent = def.tipo;
-  if (!dados || !dados.diretrizes.length) {
+  $('fonte-link').replaceChildren('Conferir na fonte: ',
+    h('a', { href: enderecoFonte(), target: '_blank', rel: 'noopener noreferrer', text: `dados originais do ${def.tipo} no DigiSUS` }),
+    ' (abre o arquivo JSON da API, sem tratamento).');
+  if (!todos || !todos.diretrizes.length) {
     alvo.replaceChildren(h('p', { class: 'painel-vazio', text: 'Este município não tem metas registradas neste ano.' }));
+    return;
+  }
+
+  // Só entra o que consta no relatório escolhido. Os indicadores que existem em outros relatórios do ano
+  // (o município pode trocar o indicador de uma meta de um relatório para o outro) ficam fora, e uma nota avisa quantos são.
+  const consta = (ind) => ind.rel[chave]?.status != null;
+  const apenasDoRelatorio = (diretrizes) => diretrizes
+    .map((d) => ({ ...d, objetivos: d.objetivos
+      .map((o) => ({ ...o, metas: o.metas.map((m) => ({ ...m, indicadores: m.indicadores.filter(consta) })).filter((m) => m.indicadores.length) }))
+      .filter((o) => o.metas.length) }))
+    .filter((d) => d.objetivos.length);
+  const ausentes = todos.diretrizes.flatMap((d) => d.objetivos).flatMap((o) => o.metas).flatMap((m) => m.indicadores).filter((i) => !consta(i)).length;
+  const dados = estado.mostrarAusentes ? todos : { ...todos, diretrizes: apenasDoRelatorio(todos.diretrizes) };
+  const notaAusentes = ausentes ? h('p', { class: 'nota-tabela nota-ausentes' },
+    `${numero(ausentes, 0)} ${ausentes === 1 ? 'indicador' : 'indicadores'} deste ano ${ausentes === 1 ? 'não consta' : 'não constam'} no ${def.tipo} (${ausentes === 1 ? 'aparece' : 'aparecem'} só em outros relatórios) e ${estado.mostrarAusentes ? 'estão sendo mostrados' : 'não são mostrados aqui'}. `,
+    (() => {
+      const b = h('button', { type: 'button', class: 'botao-link', text: estado.mostrarAusentes ? 'Ocultar' : 'Mostrar mesmo assim' });
+      b.addEventListener('click', () => { estado.mostrarAusentes = !estado.mostrarAusentes; renderArvore(); });
+      return b;
+    })()) : null;
+  if (!dados.diretrizes.length) {
+    alvo.replaceChildren(h('p', { class: 'painel-vazio', text: `Este município não tem indicadores no ${def.tipo} deste ano.` }), ...(notaAusentes ? [notaAusentes] : []));
     return;
   }
 
@@ -487,24 +645,28 @@ function renderArvore() {
           { valor: 'meta', rotulo: `Metas (${totais.meta})` },
         ], estado.nivel, (v) => { estado.nivel = v; renderArvore(); }),
         segmentado('Escala das barras', [{ valor: 'quantidade', rotulo: 'Quantidade' }, { valor: 'percentual', rotulo: 'Percentual' }], estado.modo, (v) => { estado.modo = v; renderArvore(); }),
-        botao('Abrir tudo', () => { chavesDoNivel.forEach((k) => estado.abertos.add(k)); renderArvore(); }),
-        botao('Fechar tudo', () => { chavesDoNivel.forEach((k) => estado.abertos.delete(k)); renderArvore(); })),
+        h('div', { class: 'abrir-fechar' },
+          botao('Abrir tudo', () => { chavesDoNivel.forEach((k) => estado.abertos.add(k)); renderArvore(); }),
+          botao('Fechar tudo', () => { chavesDoNivel.forEach((k) => estado.abertos.delete(k)); renderArvore(); }))),
       legendaClasses()),
+    ...(notaAusentes ? [notaAusentes] : []),
     ...lista);
 }
 
 // ---------- evolução do RAG pelos anos ----------
 function renderEvolucaoAnos(doEstado) {
   const sufixo = doEstado ? '' : '-mun';
-  $(`t-anos${sufixo}`).textContent = doEstado ? `RAG ao longo dos anos, ${estado.meso ? `em ${rotuloMeso(estado.meso)}` : 'em Pernambuco'}` : 'RAG ao longo dos anos';
-  $(`anos-legenda${sufixo}`).textContent = `Como ficou o RAG (relatório anual) de cada ano${doEstado ? ', somando todos os municípios' + (estado.meso ? ' da mesorregião' : '') : ''}. Cada barra mostra as classes de alcance dos indicadores daquele ano, e o número à direita é a parte dos indicadores que atingiu a meta.`;
+  const def = tipoDe(estado.rel);
+  $(`t-anos${sufixo}`).textContent = `${def.tipo} ao longo dos anos${doEstado ? `, ${estado.meso ? `em ${rotuloMeso(estado.meso)}` : 'em Pernambuco'}` : ''}`;
+  const natureza = def.chave === 'rag' ? 'relatório anual' : 'relatório do quadrimestre';
+  $(`anos-legenda${sufixo}`).textContent = `Como ficou o ${def.tipo} (${natureza}) de cada ano${doEstado ? ', somando todos os municípios' + (estado.meso ? ' da mesorregião' : '') : ''}. Cada barra mostra as classes de alcance dos indicadores daquele ano, e o número à direita é a parte dos indicadores que atingiu a meta.${doEstado && estado.statusMun ? ' ' + FRASE_FILTRO() : ''}`;
   const anos = [...estado.municipios.anos].sort((a, b) => a - b);
   const linhas = anos.map((ano) => {
     let classes = null;
     if (doEstado) {
-      classes = resumoAtual()?.[String(ano)]?.RAG?.classes ?? null;
+      classes = resumoAtual()?.[String(ano)]?.[def.tipo]?.classes ?? null;
     } else {
-      const r = (estado.relDados?.anos?.[String(ano)] ?? []).find((x) => x.tipo === 'RAG');
+      const r = (estado.relDados?.anos?.[String(ano)] ?? []).find((x) => x.tipo === def.tipo);
       classes = r && r.tem_metas ? r.classes : null;
     }
     const total = classes ? CLASSES.reduce((a, c) => a + (classes[c.chave] || 0), 0) : 0;
@@ -583,7 +745,7 @@ function renderSobre() {
   const anoRef = anoPadrao();
   const cl = estado.resumo?.[String(anoRef)]?.RAG?.classes;
   const indicadores = cl ? CLASSES.reduce((a, c) => a + (cl[c.chave] || 0), 0) : null;
-  const gerado = new Date(d.gerado_em);
+  const quando = dataDosDados(d);
   const fato = (valor, rotulo) => h('div', { class: 'fato' }, h('dd', { text: valor }), h('dt', { text: rotulo }));
   const secao = (titulo, ...filhos) => h('section', { class: 'sobre-secao' }, h('h3', { text: titulo }), h('div', { class: 'sobre-corpo' }, ...filhos));
   const p = (texto) => h('p', { text: texto });
@@ -597,11 +759,11 @@ function renderSobre() {
       fato(`${anos[0]}–${anos[anos.length - 1]}`, 'anos cobertos'),
       fato('4', 'relatórios por ano: 1º, 2º e 3º RDQA e RAG'),
       fato(indicadores == null ? '–' : numero(indicadores, 0), `indicadores no RAG de ${anoRef}`),
-      fato(gerado.toLocaleDateString('pt-BR'), `última exportação dos dados, às ${gerado.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`)),
+      fato(quando.data, `${quando.rotulo}, às ${quando.hora}`)),
     h('div', { class: 'sobre-grade' },
     secao('De onde vêm os dados',
       p('A fonte é a API pública do DigiSUS Gestor, do Ministério da Saúde. Os municípios registram ali o planejamento em saúde: diretrizes, objetivos, metas e indicadores, com o que foi planejado (plano), o que foi realizado (executado) e o alcance informado, em cada relatório do ano.'),
-      p('Os municípios podem atualizar os dados no DigiSUS a qualquer momento. Este painel, porém, é atualizado uma vez por mês: uma rotina coleta os dados da API, trata e exporta para cá. Por isso o que você vê pode estar um pouco atrás do que está no DigiSUS hoje. A data da última exportação, no topo desta página, mostra até onde os dados estão atualizados.'),
+      p('Os municípios podem atualizar os dados no DigiSUS a qualquer momento. Este painel, porém, é atualizado uma vez por mês: uma rotina coleta os dados da API, trata e exporta para cá. Por isso o que você vê pode estar um pouco atrás do que está no DigiSUS hoje. A data de atualização, no topo desta página, mostra até quando os dados do DigiSUS estão refletidos aqui.'),
       p('Os valores são mostrados como foram informados, sem correção. Fernando de Noronha não é exibido.')),
     secao('Como o planejamento é registrado',
       p('O município planeja no início e presta contas ao longo do ano, em relatórios com datas fixas:'),
@@ -619,10 +781,11 @@ function renderSobre() {
         ['Indicador', 'a medida usada para acompanhar a meta. É nele que ficam o plano, o executado e o alcance.'],
       ].map(([nome, texto], i) => h('div', { class: 'nivel', style: `margin-left:${i * 28}px` }, h('strong', { text: nome }), h('span', { text: ` ${texto}` })))),
       p('Quase toda meta tem um único indicador. Algumas poucas têm dois ou três, e nesses casos cada indicador aparece em uma linha própria, abaixo da meta.'),
-      p('Para cada indicador, o município informa o plano (o valor que se propôs a atingir), o executado (o que diz ter realizado) e o alcance (o percentual de cumprimento publicado). Isso é registrado em cada um dos 4 relatórios do ano.')),
+      p('Para cada indicador, o município informa o plano (o valor que se propôs a atingir), o executado (o que diz ter realizado) e o alcance (o percentual publicado pelo DigiSUS). Isso é registrado em cada um dos 4 relatórios do ano.')),
     secao('Como ler os números',
       h('ul', { class: 'lista-classes' }, CLASSES.map((c) => h('li', {}, h('span', { class: `chave seg-${c.chave}` }), h('span', {}, h('strong', { text: c.rotulo }), ` (${c.regra})`)))),
       p('As classes e a mediana são cálculos deste painel sobre o alcance registrado no DigiSUS. O alcance aparece como foi publicado e, em alguns casos, não bate com executado ÷ plano; o painel não corrige.'),
+      p('O painel não avalia se um valor é bom ou ruim. "Atingida" significa apenas que o alcance informado é de 100% ou mais.'),
       p('Zero e campo vazio são declarações do gestor, confirmadas no envio do relatório. O que os dados não mostram é o motivo: um zero pode ser uma meta não cumprida ou uma ação que não se aplicou ao período. Por isso o vermelho não deve ser lido como juízo sobre o município.'),
       p('O painel não ordena municípios.')),
     secao('Código e documentação',
@@ -659,9 +822,67 @@ function gravarHash() {
   history.replaceState(null, '', `#${p.toString()}`);
 }
 
+// ---------- município: indicadores com plano, plano zero e plano vazio ----------
+const PARTES_PLANO = [
+  { chave: 'com', rotulo: 'Com plano', regra: 'plano maior que zero' },
+  { chave: 'zero', rotulo: 'Plano zero', regra: 'plano igual a zero' },
+  { chave: 'vazio', rotulo: 'Plano vazio', regra: 'campo do plano não preenchido' },
+];
+
+function contarPlano(chave) {
+  const c = { com: 0, zero: 0, vazio: 0, zeroComExecutado: 0 };
+  for (const dz of estado.metasDados?.diretrizes ?? []) for (const o of dz.objetivos) for (const m of o.metas) for (const ind of m.indicadores) {
+    const r = ind.rel[chave];
+    if (!r || r.status == null) continue; // o indicador não consta neste relatório
+    if (r.plano == null) c.vazio += 1;
+    else if (r.plano === 0) { c.zero += 1; if ((r.executado || 0) > 0) c.zeroComExecutado += 1; }
+    else c.com += 1;
+  }
+  return c;
+}
+
+function renderPlano() {
+  $('t-plano-mun').textContent = nomeDe(estado.mun);
+  const linhas = RELATORIOS.map((d) => {
+    const c = contarPlano(d.chave);
+    const total = c.com + c.zero + c.vazio;
+    const atual = d.chave === estado.rel;
+    if (!total) return h('div', { class: `linha-plano${atual ? ' atual' : ''}` }, h('span', { class: 'rotulo-plano', text: d.tipo }), h('span', { class: 'barra-vazia', text: 'sem indicadores' }), h('span', { class: 'valor-plano', text: '–' }));
+    const trilho = h('div', { class: 'barra-plano' });
+    for (const parte of PARTES_PLANO) {
+      const n = c[parte.chave];
+      if (!n) continue;
+      const pct = (n / total) * 100;
+      const seg = h('div', { class: `seg-plano plano-${parte.chave}`, style: `flex:${n} 1 0`, tabindex: 0, role: 'img',
+        'aria-label': `${parte.rotulo}: ${n} de ${total} indicadores (${porcento(pct)})` });
+      if (pct >= 9) seg.append(h('span', { text: porcento(pct, 0) }));
+      ligarDica(seg, `${numero(n, 0)} ${n === 1 ? 'indicador' : 'indicadores'} (${porcento(pct)})`, `${parte.rotulo} · ${parte.regra}`);
+      trilho.append(seg);
+    }
+    // texto neutro: descreve o que está no dado, sem dizer que "não houve plano"
+    const zeroOuVazio = c.zero + c.vazio;
+    const que = c.zero && c.vazio ? '0 ou vazio' : c.zero ? '0' : 'vazio';
+    return h('div', { class: `linha-plano${atual ? ' atual' : ''}` },
+      h('span', { class: 'rotulo-plano', text: d.tipo }), trilho,
+      h('span', { class: 'valor-plano', text: zeroOuVazio ? `${porcento((zeroOuVazio / total) * 100, 0)} com plano ${que}` : 'todos com plano' }));
+  });
+  const c = contarPlano(estado.rel);
+  const def = tipoDe(estado.rel);
+  // só um fato, sem interpretação; sem casos, o destaque nem aparece
+  const n = c.zeroComExecutado;
+  const destaque = n ? h('div', { class: 'destaque-plano', role: 'note' },
+    h('strong', { class: 'destaque-numero', text: numero(n, 0) }),
+    h('p', { text: `${n === 1 ? 'indicador' : 'indicadores'} do ${def.tipo} ${n === 1 ? 'tem' : 'têm'} plano 0 e valor executado maior que 0.` })) : null;
+  $('plano').replaceChildren(
+    h('div', { class: 'linhas-plano' }, linhas),
+    h('ul', { class: 'legenda' }, PARTES_PLANO.map((x) => h('li', {}, h('span', { class: `chave plano-${x.chave}` }), h('span', { text: `${x.rotulo} (${x.regra})` })))),
+    ...(destaque ? [destaque] : []));
+}
+
 function renderPorMunicipio() {
   const porTipo = new Map((estado.relDados?.anos?.[String(estado.ano)] ?? []).map((r) => [r.tipo, r]));
   renderCartoes(porTipo);
+  renderPlano();
   renderArvore();
   renderEvolucaoAnos(false);
 }
@@ -693,7 +914,6 @@ function limparFiltros() {
 }
 
 async function atualizar() {
-  $('limpar-mun').hidden = !(estado.mun || estado.meso || estado.statusMun || $('busca-mun').value);
   if (estado.pagina === 'sobre') { renderSobre(); gravarHash(); return; }
   if (estado.pagina === 'municipios') {
     estado.munResumo ??= await carregar('data/municipios_resumo.json');
@@ -735,6 +955,7 @@ async function atualizar() {
 }
 
 function selecionarMunicipio(id) {
+  if (estado.mun === id) { limparMunicipio(); return; }
   if (estado.meso && estado.mesoDe.get(id) !== estado.meso) { estado.meso = ''; $('sel-meso').value = ''; preencherMunicipios(); }
   estado.mun = id; estado.meta = null; estado.indicador = 0;
   $('sel-municipio').value = id;
@@ -743,7 +964,7 @@ function selecionarMunicipio(id) {
 
 function preencherMunicipios() {
   const lista = estado.municipios.municipios.filter((m) => (!estado.meso || m.mesorregiao === estado.meso) && (statusOk(m.id) || m.id === estado.mun));
-  $('sel-municipio').replaceChildren(h('option', { value: '', text: estado.meso || estado.statusMun ? `Todos os filtrados (${lista.length})` : 'Todos os municípios' }),
+  $('sel-municipio').replaceChildren(h('option', { value: '', text: estado.meso || estado.statusMun ? `Todos (${lista.length})` : 'Todos os municípios' }),
     ...[...lista].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).map((m) => h('option', { value: m.id, text: m.tem_dados ? m.nome : `${m.nome} (sem dados)` })));
   $('sel-municipio').value = estado.mun;
 }
@@ -775,15 +996,30 @@ function preencherFiltros() {
     preencherStatus();
     preencherMunicipios();
     renderEstado();
+    renderEvolucaoAnos(true);
     if (estado.mun) renderArvore();
     gravarHash();
   });
 }
 
+// Data dos dados: a da extração, se a carga a registrou; senão a da carga no Databricks; senão (arquivos antigos)
+// a da exportação do JSON. Mostrada sempre no horário de Pernambuco, para não depender do fuso de quem abre.
+function dataDosDados(d) {
+  const [valor, tipo] = d.extraido_em ? [d.extraido_em, 'extracao'] : d.carga_em ? [d.carga_em, 'carga'] : [d.gerado_em, 'exportacao'];
+  const momento = new Date(valor);
+  const fuso = { timeZone: 'America/Recife' };
+  return {
+    tipo,
+    data: momento.toLocaleDateString('pt-BR', fuso),
+    hora: momento.toLocaleTimeString('pt-BR', { ...fuso, hour: '2-digit', minute: '2-digit' }),
+    rotulo: tipo === 'exportacao' ? 'última exportação dos dados' : 'última atualização com dados do DigiSUS',
+  };
+}
+
 function renderRodape() {
   const d = estado.municipios;
   const anos = [...d.anos].sort((x, y) => x - y);
-  const data = new Date(d.gerado_em).toLocaleDateString('pt-BR');
+  const quando = dataDosDados(d);
   const aba = (rotulo, pagina) => {
     const b = h('button', { type: 'button', class: 'link-rodape', text: rotulo });
     b.addEventListener('click', () => mostrarPagina(pagina));
@@ -794,9 +1030,8 @@ function renderRodape() {
   $('rodape-texto').replaceChildren(
     h('div', { class: 'rodape-grade' },
       coluna('Fonte e atualização',
-        h('p', { text: 'DigiSUS Gestor, do Ministério da Saúde.' }),
-        h('p', { text: `Dados de ${anos[0]} a ${anos[anos.length - 1]}.` }),
-        h('p', { text: `Atualizado em ${data}, com nova carga todo mês.` })),
+        h('p', { text: `DigiSUS Gestor, do Ministério da Saúde. Dados de ${anos[0]} a ${anos[anos.length - 1]}.` }),
+        h('p', { text: `Última atualização com dados do DigiSUS em ${quando.data}. Nova atualização todo mês.` })),
       coluna('Navegar', aba('Panorama', 'panorama'), aba('Municípios', 'municipios'), aba('Detalhe do município', 'municipio'), aba('Sobre os dados', 'sobre')),
       coluna('Projeto', externo('Código no GitHub', REPOSITORIO), externo('Documentação', `${REPOSITORIO}/tree/main/docs`), aba('Como os dados são tratados', 'sobre')),
       coluna('Encontrou um erro?',
@@ -813,7 +1048,11 @@ function renderRodape() {
           const endereco = ['painelsus', 'gmail.com'].join('@');
           return h('a', { class: 'link-rodape', href: `mailto:${endereco}?subject=${encodeURIComponent('Painel de metas de saúde: relato')}`, text: endereco });
         })())),
-    h('p', { class: 'rodape-nota', text: 'Painel independente, feito a partir de dados públicos, sem vínculo com o Ministério da Saúde. Os valores são mostrados como informados pelos municípios, sem correção.' }));
+    h('p', { class: 'rodape-nota' },
+      'Painel independente, feito a partir de dados públicos, sem vínculo com o Ministério da Saúde. Os valores são mostrados como informados pelos municípios, sem correção.',
+      h('span', { class: 'rodape-autor' }, 'Desenvolvido por ',
+        h('a', { href: 'https://www.linkedin.com/in/pablo-renato/', target: '_blank', rel: 'noopener noreferrer', text: 'Páblo Renato' }),
+        ' (LinkedIn).')));
 }
 
 function iniciarTema() {
@@ -881,7 +1120,12 @@ async function iniciar() {
 // Botão para voltar ao topo: aparece depois de rolar um pouco e sobe devagar
 function iniciarBotaoTopo() {
   const botao = $('ao-topo');
-  const atualizarBotao = () => { botao.hidden = window.scrollY < 480; };
+  const atualizarBotao = () => {
+    botao.hidden = window.scrollY < 480;
+    // no fim da página o botão ganha cor, porque é aí que a pessoa mais precisa dele
+    const noFim = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 120;
+    botao.classList.toggle('no-fim', noFim);
+  };
   window.addEventListener('scroll', atualizarBotao, { passive: true });
   botao.addEventListener('click', () => {
     const reduz = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
