@@ -26,6 +26,30 @@ set -a && . ./.env && set +a
 .dbt-venv/Scripts/python.exe export/exportar_site.py
 ```
 
+### Linux (servidor)
+
+Sem o ambiente do dbt, crie um ambiente só para a exportação (uma vez):
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install databricks-sql-connector pyarrow
+```
+
+Depois, a cada atualização:
+
+```bash
+set -a && . ./.env && set +a
+.venv/bin/python export/exportar_site.py
+```
+
+- Use `python3`: em máquinas com pyenv o comando `python` pode não existir. Se o `python3` não for achado, use o caminho do pyenv, por exemplo `~/.pyenv/versions/3.11.9/bin/python -m venv .venv`.
+- O `pyarrow` acelera a leitura. Sem ele a exportação termina, mas leva bem mais que os 40 segundos habituais.
+- O `.venv/` já está no `.gitignore`.
+
+### Quando rodar
+
+Depois que a extração, a carga no Databricks (`databricks/carga_raw_resultados_metas.py`) e o `dbt build` terminarem, nessa ordem. O site passa a mostrar os dados novos assim que o export termina, sem reiniciar o servidor. Para conferir, veja `extraido_em` em `site/data/municipios.json`: ele só vem preenchido se a carga rodou com a versão do notebook que grava `_extracted_at`; senão fica `null` e o site mostra a data da carga.
+
 Usa `DATABRICKS_HOST`, `DATABRICKS_HTTP_PATH`, `DBT_DATABRICKS_TOKEN` e, opcionalmente, `DATABRICKS_CATALOG`. O pacote `databricks-sql-connector` já vem com o `dbt-databricks`. Leva cerca de 40 segundos e usa o SQL Warehouse (consome a cota do Databricks de forma mínima, uma vez por execução).
 
 A pasta nova é montada ao lado (`site/data.tmp`) e só substitui `site/data` no fim, então uma falha no meio não deixa o site com dados pela metade. No Windows, feche antes o servidor local (`python -m http.server`): com ele aberto a troca de pastas pode falhar com `PermissionError`. Se isso acontecer, `site/data.tmp` já está completa, e basta renomeá-la para `site/data`.
